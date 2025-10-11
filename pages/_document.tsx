@@ -12,7 +12,7 @@ export default function Document() {
 				<script
 					defer
 					data-domain="samuelscheit.com"
-					src="http://p.samuelscheit.com/js/script.outbound-links.pageview-props.tagged-events.js"
+					src="http://p.samuelscheit.com/js/script.js"
 				/>
 				<script
 					dangerouslySetInnerHTML={{
