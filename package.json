@@ -27,7 +27,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev --webpack",
-		"build": "next build --experimental-build-mode generate && next build --experimental-build-mode compile && next-sitemap --config next-sitemap.config.mjs",
+		"build": "next build --experimental-build-mode compile && next build --experimental-build-mode generate && next-sitemap --config next-sitemap.config.mjs",
 		"start": "next start",
 		"lint": "next lint",
 		"screenshot": "node screenshot.js",
