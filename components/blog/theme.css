@@ -41,7 +41,7 @@ h1 {
 	letter-spacing: -0.03em;
 }
 
-.x:prose code {
+code {
 	&:before,
 	&:after {
 		@apply x:hidden;
@@ -51,7 +51,7 @@ h1 {
 	}
 }
 
-.x:prose .nextra-callout p {
+.nextra-callout p {
 	@apply x:m-0;
 }
 
