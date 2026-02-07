@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import Image from "next-export-optimize-images/image";
+import Image from "next/image";
 import Spacebar from "../public/projects/spacebar.png";
 import DiscordBotClient from "../public/projects/discord_bot_client.png";
 import CarcassonneAI from "../public/projects/carcassonne_ai.png";
@@ -51,18 +51,17 @@ export function Projects() {
 
 	return (
 		<section className="projects" id="projects">
-				<h2
-					style={{
-						fontSize: "4rem",
-						textAlign: "center",
-						marginTop: "4rem",
-						marginBottom: "4rem",
-					}}
-				>
-					Projects
-				</h2>
+			<h2
+				style={{
+					fontSize: "4rem",
+					textAlign: "center",
+					marginTop: "4rem",
+					marginBottom: "4rem",
+				}}
+			>
+				Projects
+			</h2>
 			<div className="projects-container">
-
 				<div className="list">
 					<Card href="https://spacebar.chat">
 						<Image style={{ aspectRatio: "2 / 1" }} src={Spacebar} alt="Spacebar" />

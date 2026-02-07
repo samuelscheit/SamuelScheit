@@ -17,13 +17,6 @@ const nextConfig = {
 			use: ["@svgr/webpack"],
 		});
 
-		const nextExportImageLoader = config.module.rules.find(
-			({ use }) => use && use.length > 0 && use[0]?.loader === "next-export-optimize-images-loader",
-		);
-		if (nextExportImageLoader) {
-			nextExportImageLoader.test = /\.(png|jpg|jpeg|gif|webp|avif|ico|bmp)$/i; // Removed only svg
-		}
-
 		return config;
 	},
 	turbopack: {

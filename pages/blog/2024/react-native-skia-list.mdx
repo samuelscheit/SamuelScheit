@@ -52,9 +52,9 @@ Performance was particularly bad when rendering heavy UI components, such as cha
 
 I imagined there were the following bottlenecks that would need to be addressed:
 
--   React reconciler overhead
--   Layout measurement for each item
--   Rendering heavy UI components
+- React reconciler overhead
+- Layout measurement for each item
+- Rendering heavy UI components
 
 and I couldn't think of a solution to these problems with React Native's component architecture except for building the list item component natively.
 
@@ -78,7 +78,7 @@ To combat the issue of blocking the main JS thread, react-native-skia provides t
 
 However, the issue is that for each frame, a new canvas has to be created, and the image has to be sent between the threads, resulting in high memory usage:
 
-import Image from "next-export-optimize-images/image";
+import Image from "next/image";
 import Memory from "./react-native-skia-list/memory.png";
 
 <Image src={Memory} alt="React Native Skia Image Offscreen Memory Usage" style={{ width: "70%" }} />
@@ -259,7 +259,7 @@ export default function FlatList() {
 					width,
 					height: rectHeight,
 					paint: blue, // Set the paint to blue
-				})
+				}),
 			);
 
 			// Add a paragraph node to the item containing the text
@@ -270,7 +270,7 @@ export default function FlatList() {
 					y: rectPadding, // Add vertical padding
 					width: maxTextWidth, // Set the maximum width for the text
 					color: white, // Set the text color to white
-				})
+				}),
 			);
 
 			return itemHeight; // Return the calculated item height for proper layout

@@ -1,10 +1,10 @@
 import Avatar from "../public/avatar.png";
-import Image from "next-export-optimize-images/image";
+import Image from "next/image";
 
 function RepeatFirstElement(
 	props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & {
 		children: React.ReactNode[];
-	}
+	},
 ) {
 	return (
 		<div {...props}>
