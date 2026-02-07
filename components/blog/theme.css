@@ -1,44 +1,58 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss" prefix(x);
+@plugin "@tailwindcss/typography";
+
+@source "../../node_modules/nextra/**/*.{js,ts,tsx,mjs,cjs}";
+@source "../../node_modules/nextra-theme-blog/**/*.{js,ts,tsx,mjs,cjs}";
+
+@source "../../pages/**/*.{js,ts,tsx,mjs,cjs,mdx}";
+@source "../../components/**/*.{js,ts,tsx,mjs,cjs,mdx}";
+@source "../../app/**/*.{js,ts,tsx,mjs,cjs,mdx}";
+
 @import "./code-block.css";
 @import "./subheading-anchor.css";
 @import "./scrollbar.css";
 @import "./steps.css";
 @import "./cards.css";
 
+@theme {
+	--color-primary: var(--color-blue-400);
+	--color-primary-600: var(--color-blue-600);
+	--color-black: var(--color-gray-900);	
+}
+
+
 html {
-	@apply _scroll-pt-5;
+	@apply x:scroll-pt-5;
 }
 
 body {
-	@apply _px-4 _bg-[rgb(var(--nextra-bg))];
+	@apply x:px-4 x:bg-[rgb(var(--nextra-bg))];
 }
 
 article {
-	@apply _mx-auto _block _pt-20 _pb-32;
+	@apply x:mx-auto x:block x:pt-20 x:pb-32;
 }
 
 article img {
-	@apply _mx-auto;
+	@apply x:mx-auto;
 }
 
 h1 {
 	letter-spacing: -0.03em;
 }
 
-._prose code {
+.x:prose code {
 	&:before,
 	&:after {
-		@apply _hidden;
+		@apply x:hidden;
 	}
 	.line {
-		@apply _font-normal;
+		@apply x:font-normal;
 	}
 }
 
-._prose .nextra-callout p {
-	@apply _m-0;
+.x:prose .nextra-callout p {
+	@apply x:m-0;
 }
 
 .footnotes a[data-footnote-backref] {

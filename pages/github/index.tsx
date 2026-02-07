@@ -246,18 +246,6 @@ function getCommitsForYear(repo: Repository, year: number): Commit[] {
 	});
 }
 
-// Helper function to get excluded repos for a specific year
-function getExcludedReposForYear(excludedRepos: GitHubData["excludedRepositories"], year: number) {
-	if (!excludedRepos) return [];
-
-	return excludedRepos.filter((repo) => {
-		return repo.commits.some((commit) => {
-			const commitDate = parseISO(commit.committedDate);
-			return commitDate.getFullYear() === year;
-		});
-	});
-}
-
 // Group repositories by year and organization
 function groupReposByYearAndOrg(repos: { [key: string]: Repository }) {
 	const yearGroups: { [year: number]: { [org: string]: Repository[] } } = {};
@@ -406,10 +394,10 @@ export default function GitHubTimeline(props: InferGetStaticPropsType<typeof get
 				</Links>
 			</div>
 			<div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem 1rem" }}>
-				<div className="_flex _justify _z-10 _pb-10 _justify-center">
+				<div className="x:flex x:justify x:z-10 x:pb-10 x:justify-center">
 					<Link
 						href={"/"}
-						className="_text-center _p-4 _text-4xl _font-bold _bg-clip-text _text-transparent"
+						className="x:text-center x:p-4 x:text-4xl x:font-bold x:bg-clip-text x:text-transparent!"
 						style={{
 							backgroundImage: "linear-gradient(90deg, rgba(0,124,240,1) 23%, rgba(0,223,216,1) 71%)",
 							textDecoration: "none",
@@ -419,7 +407,7 @@ export default function GitHubTimeline(props: InferGetStaticPropsType<typeof get
 					</Link>
 				</div>
 
-				<section style={{ margin: "0 auto 3rem auto", maxWidth: 1200,minHeight:"auto" }}>
+				<section style={{ margin: "0 auto 3rem auto", maxWidth: 1200, minHeight: "auto" }}>
 					<h2
 						style={{
 							fontSize: "2.2rem",

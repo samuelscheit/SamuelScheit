@@ -1,9 +1,6 @@
 import Link from "next/link";
-export const NEXTRA_INTERNAL = Symbol.for("__nextra_internal__");
-import { pageMap } from "../.next/static/chunks/nextra-page-map-.mjs";
 
-type Page = {
-	name: string;
+export type BlogPost = {
 	route: string;
 	frontMatter: {
 		title: string;
@@ -13,16 +10,8 @@ type Page = {
 	};
 };
 
-export function BlogPosts() {
-	const blog = pageMap.find((x) => x.name === "blog");
-	if (!blog) return null;
-
-	let posts = blog.children
-		.reduce((acc, x) => {
-			return acc.concat(x.children as any);
-		}, [] as Page[])
-		.map((x) => ({ ...x, frontMatter: { ...x.frontMatter, date: x.frontMatter?.date ? new Date(x.frontMatter.date) : new Date() } }))
-		.sort((a, b) => b.frontMatter.date.getTime() - a.frontMatter.date.getTime());
+export function BlogPosts({ posts }: { posts: BlogPost[] }) {
+	if (posts.length === 0) return null;
 
 	return (
 		<section className="blogposts" id="blog">

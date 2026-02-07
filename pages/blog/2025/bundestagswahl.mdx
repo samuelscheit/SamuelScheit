@@ -8,12 +8,12 @@ language: de
 ---
 
 import { Callout } from "nextra/components";
-
+ 
 <Callout type="info">
-	<div className="_text-sm">
+	<span className="text-sm not-prose">
 		TLDR 5k Wahlstimmen Diskrepanzen vermutlich durch menschliche Fehler, die aber keinen Einfluss auf das Wahlergebnis, die
 		Sitzverteilung oder die 5% Hürde haben und beim endgültigen Ergebnis korrigiert werden.
-	</div>
+	</span>
 </Callout>
 
 Ich bin zunächst auf das Thema aufmerksam geworden durch einen Post der Diskrepanzen gezeigt hat zwischen den Bundestagswahl Stimmen die in Aschaffenburg ausgezählt wurden und den Stimmen die von der Bundeswahlleiterin vorläufig veröffentlicht wurden.
@@ -23,7 +23,7 @@ import AschaffenburgKreiswahlleiter from "./bundestagswahl/aschaffenburg_kreiswa
 import AschaffenburgBundeswahlleiterin from "./bundestagswahl/aschaffenburg_bundeswahlleiterin.png";
 import { Link } from "../../../components/Link";
 
-<div style={{ flexDirection: "row", display: "grid", columnGap: "1rem", gridTemplateColumns:"1fr 1fr", rowGap:"0.5rem", justifyItems: "center" }} className="_text-md">
+<div style={{ flexDirection: "row", display: "grid", columnGap: "1rem", gridTemplateColumns:"1fr 1fr", rowGap:"0.5rem", justifyItems: "center" }} className="x:text-md">
     <div>
     	<Link href="https://wahl.aschaffenburg.de/bundestagswahl2025/ergebnisse.html">Stadt Aschaffenburg</Link>
     </div>
@@ -63,21 +63,21 @@ Dabei fielen mir unterschiedliche Datenaufmachungen auf, die von mehreren Wahlkr
 import Votegroup from "./bundestagswahl/votegroup.png";
 import Votemanager from "./bundestagswahl/votemanager.png";
 import MVNet from "./bundestagswahl/mvnet.png";
-import Thüringen from "./bundestagswahl/thüringen.png";
+import Thueringen from "./bundestagswahl/thueringen.png";
 import Sachsen from "./bundestagswahl/sachsen.png";
 import Krzn from "./bundestagswahl/krzn.png";
 
-<div class="_grid _grid-cols-1 md:_grid-cols-2 _gap-6 _text-center" style={{gridTemplateColumns:"1fr 1fr"}}>
-	<div class="_flex _flex-col _justify-between">
-		<Image src={Votegroup} class="_w-1/2" alt="Wahlabwicklungssystem" style={{margin:"0"}} />
+<div className="x:grid x:grid-cols-1 x:md:grid-cols-2 x:gap-6 x:text-center" style={{gridTemplateColumns:"1fr 1fr"}}>
+	<div className="x:flex x:flex-col x:justify-between">
+		<Image src={Votegroup} className="" alt="Wahlabwicklungssystem" style={{margin:"0"}} />
 		<div>
 			<Link href="https://www.votegroup.de/">Wahlabwicklungssystem (WAS)</Link>
 			wird verwendet von etwa 30% der Wahlkreise in Deutschland (Bayern, Saarland, Berlin, Brandenburg, Hamburg, Schleswig Holstein, Bremen und vereinzelte Wahlkreise in anderen Bundesländern).
 		</div>
 	</div>
 
-    <div class="_flex _flex-col _justify-between">
-    	<Image src={Votemanager} class="_w-1/2" alt="VoteGroup" style={{margin:"0"}} />
+    <div className="x:flex x:flex-col x:justify-between">
+    	<Image src={Votemanager} className="" alt="VoteGroup" style={{margin:"0"}} />
     	<div>
     		<Link href="https://wahlen.votemanager.de/">VoteManager</Link>
     		wird verwendet von etwa 30% der Wahlkreise (Niedersachsen, Nordrhein-Westfalen, Hessen, Baden-Württemberg, Sachsen Anhalt) und war sehr einfach
@@ -85,8 +85,8 @@ import Krzn from "./bundestagswahl/krzn.png";
     	</div>
     </div>
 
-    <div  class="_flex _flex-col _items-center">
-    	<Image src={MVNet} class="_w-1/2" alt="MVNet"  style={{margin:"0"}}/>
+    <div  className="x:flex x:flex-col x:items-center">
+    	<Image src={MVNet} className="" alt="MVNet"  style={{margin:"0"}}/>
     	<div>
     		<Link href="https://wahlen.mvnet.de/wahl/bund">MVNet</Link>
     		wird ausschließlich verwendet von Mecklenburg-Vorpommern und war schwierig zu analysieren, da keine ordentliche HTML Struktur
@@ -94,8 +94,8 @@ import Krzn from "./bundestagswahl/krzn.png";
     	</div>
     </div>
 
-    <div  class="_flex _flex-col _items-center">
-    	<Image src={Krzn} class="_w-1/2" alt="Krzn"  style={{margin:"0"}}/>
+    <div  className="x:flex x:flex-col x:items-center">
+    	<Image src={Krzn} className="" alt="Krzn"  style={{margin:"0"}}/>
     	<div>
     		<Link href="https://wahl.krzn.de/bw2025/">Krzn</Link>
     		wird verwendet von einzelnen Wahlkreisen in Nordrhein-Westfalen und bot eine CSV Datei zum Download an.
@@ -104,15 +104,15 @@ import Krzn from "./bundestagswahl/krzn.png";
 
 
 
-    <div  class="_flex _flex-col _items-center">
-    	<Image src={Thüringen} class="_w-1/2" alt="Thüringen Wahlen" style={{margin:"0"}} />
+    <div  className="x:flex x:flex-col x:items-center">
+    	<Image src={Thueringen} className="" alt="Thüringen Wahlen" style={{margin:"0"}} />
     	<p>
     		<Link href="https://wahlen.thueringen.de/datenbank/wahl1/wahl.asp?wahlart=BW&wJahr=2025&zeigeErg=SORTWK">Wahlen Thüringen</Link>
     	</p>
     </div>
 
-    <div  class="_flex _flex-col _items-center">
-    	<Image src={Sachsen} class="_w-1/2" alt="Sachsen Wahlen" style={{margin:"0"}} />
+    <div  className="x:flex x:flex-col x:items-center">
+    	<Image src={Sachsen} className="" alt="Sachsen Wahlen" style={{margin:"0"}} />
     	<p>
     		<Link href="https://www.wahlen.sachsen.de/bundestagswahlen-2025-wahlergebnisse.php">Wahlen Sachsen</Link>
     	</p>
@@ -127,71 +127,73 @@ Nachdem ich mühselig alle 299 [Quellen](https://github.com/SamuelScheit/bundest
 Jetzt zum spannenden Teil, der Datenanalyse. Nachdem ich nun beide Datenquellen (Bundeswahlleiterin und Wahlkreise) in einem einheitlichen Format hatte, konnte ich die Wahlkreisergebnisse der Bundeswahlleiterin mit den original Daten der Wahlkreise vergleichen und die Differenz der Stimmen berechnen.
 
 import list from "./bundestagswahl/list.json";
-import { Table, Th, Tr, Td, Bleed } from "nextra/components";
+import { Table } from "nextra/components";
 
-<Table style={{ maxHeight: "50vh", overflow: "auto" }}>
-	<thead className="_text-md">
-		<Tr>
-			<Th>Wahlkreis</Th>
-			<Th>Partei</Th>
-			<Th>Bund</Th>
-			<Th>Wahlkreis</Th>
-			<Th>Differenz</Th>
-		</Tr>
-	</thead>
-	<tbody className="_text-sm">
-		{list.map((row, i) => (
-			<Tr key={i}>
-				<Td>{row.wahlkreis}</Td>
-				<Td>{row.partei}</Td>
-				<Td>
-					<a
-						href={`https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse/bund-99/land-${row.bundesland_id}/wahlkreis-${row.wahlkreis_id}.html`}
-					>
-						{row.bundesStimmen}
-					</a>
-				</Td>
-				<Td>
-					<a href={row.wahlkreis_source}>{row.wahlkreisStimmen}</a>
-				</Td>
-				<Td>{row.diff}</Td>
-			</Tr>
-		))}
-	</tbody>
-</Table>
+<div style={{ maxHeight: "50vh", overflowY: "auto" }}>
+	<Table>
+		<thead className="x:text-md">
+			<Table.Tr>
+				<Table.Th>Wahlkreis</Table.Th>
+				<Table.Th>Partei</Table.Th>
+				<Table.Th>Bund</Table.Th>
+				<Table.Th>Wahlkreis</Table.Th>
+				<Table.Th>Differenz</Table.Th>
+			</Table.Tr>
+		</thead>
+		<tbody className="x:text-sm">
+			{list.map((row, i) => (
+				<Table.Tr key={i}>
+					<Table.Td>{row.wahlkreis}</Table.Td>
+					<Table.Td>{row.partei}</Table.Td>
+					<Table.Td>
+						<a
+							href={`https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse/bund-99/land-${row.bundesland_id}/wahlkreis-${row.wahlkreis_id}.html`}
+						>
+							{row.bundesStimmen}
+						</a>
+					</Table.Td>
+					<Table.Td>
+						<a href={row.wahlkreis_source}>{row.wahlkreisStimmen}</a>
+					</Table.Td>
+					<Table.Td>{row.diff}</Table.Td>
+				</Table.Tr>
+			))}
+		</tbody>
+	</Table>
+</div>
 
 Um die gesamt Menge an Stimmen besser visualisieren zu können, habe ich die Differenzen pro Partei zusammengefasst.
 
 import total from "./bundestagswahl/total.json";
 
 <Table style={{float:"left",marginRight:"1rem"}}>
-	<thead className="_text-md">
-		<Tr>
-			<Th>Partei</Th>
-			<Th>Stimmen</Th>
-		</Tr>
+	<thead className="x:text-md">
+		<Table.Tr>
+			<Table.Th>Partei</Table.Th>
+			<Table.Th>Stimmen</Table.Th>
+		</Table.Tr>
 	</thead>
-	<tbody className="_text-sm">
+	<tbody className="x:text-sm">
 		{Object.entries(total)
 			.sort((a, b) => b[1] - a[1])
 			.map(([partei, diff]) => (
-				<Tr key={partei}>
-					<Td style={{ padding: "0.2rem", paddingLeft: "0.5rem" }}>{partei}</Td>
-					<Td style={{ padding: 0 }} className="_text-center">
+				<Table.Tr key={partei}>
+					<Table.Td style={{ padding: "0.2rem", paddingLeft: "0.5rem" }}>{partei}</Table.Td>
+					<Table.Td style={{ padding: "0.2rem" }} className="x:text-center">
 						{diff}
-					</Td>
-				</Tr>
+					</Table.Td>
+				</Table.Tr>
 			))}
 
-    		<Tr>
-    			<Th>Gesamt</Th>
-    			<Th>{Object.values(total).reduce((a, b) => (a) + Math.abs(b), 0)}</Th>
-    		</Tr>
+    		<Table.Tr>
+    			<Table.Th>Gesamt</Table.Th>
+    			<Table.Th>{Object.values(total).reduce((a, b) => (a) + Math.abs(b), 0)}</Table.Th>
+    		</Table.Tr>
     </tbody>
 
 </Table>
 
-Dabei sieht man, dass das BSW am meisten Stimmen Diskrepanzen hat, gefolgt von der CDU und dem Bündnis Deutschland. Besonders ist dabei, dass das BSW und Bündnis Deutschland im Vergleich zu ihrer Gesamtstimmenanzahl die höchste relative Diskrepanz haben.
+Dabei sieht man, dass das BSW die höchste Diskrepanzen hat, gefolgt von der CDU und dem Bündnis Deutschland. Besonders ist dabei, dass das BSW und Bündnis Deutschland im Vergleich zu ihrer Gesamtstimmenanzahl die höchste relative Diskrepanz haben.
 
 Jedoch ist die absolute Diskrepanz zu den 49.927.315 abgegebenen Stimmen mit 0,04% gering und hat keinen Einfluss auf das Wahlergebnis und keinen Einfluss auf die Sitzverteilung und auch keinen Einfluss auf die 5% Hürde für den Einzug in den Bundestag.
 
@@ -202,12 +204,10 @@ Jedoch ist die absolute Diskrepanz zu den 49.927.315 abgegebenen Stimmen mit 0,0
 ChatGPT zeigt folgende mögliche Ursachen für die Diskrepanzen:
 
 1. **Übertragungs- und Meldefehler**
-
     - **Manuelle Eingabefehler**: In vielen Gemeinden werden die Ergebnisse zunächst per Hand in ein System eingegeben oder telefonisch übermittelt. Hier können Tippfehler und Verwechslungen auftreten.
     - **Fehlende oder falsche Meldungen**: Falls ein Wahlkreis seine Ergebnisse verspätet oder fehlerhaft meldet, kann es zu Abweichungen kommen.
 
 2. **Unterschiede zwischen vorläufigen und endgültigen Ergebnissen**
-
     - **Korrekturen nach erneuter Prüfung**: Nach der ersten Erfassung werden die Wahlergebnisse von den Wahlleitern geprüft, was zu Anpassungen führen kann.
     - **Fehlende Berücksichtigung von Nachmeldungen**: Manche verspäteten Meldungen werden erst im endgültigen Wahlergebnis berücksichtigt.
 

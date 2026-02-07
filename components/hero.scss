@@ -103,8 +103,6 @@
 	}
 
 	@media screen and (max-width: 800px) {
-		justify-content: space-around;
-
 		.links {
 			flex-direction: row;
 			justify-content: center;
@@ -113,6 +111,7 @@
 
 		.navigation {
 			position: static;
+			padding-top: 50px;
 		}
 
 		.grid {

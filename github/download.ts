@@ -207,35 +207,6 @@ const commitsByRefQuery = `
     }
   }`;
 
-const allCommitsQuery = `
-  query (
-    $owner: String!
-    $name: String!
-    $authorId: ID!
-  ) {
-    repository(owner: $owner, name: $name) {
-      refs(first: 100, refPrefix: "refs/heads/") {
-        nodes {
-          name
-          target {
-            ... on Commit {
-              history(first: 100, author: {id: $authorId}) {
-                edges {
-                  node {
-                    oid
-                    messageHeadline
-                    committedDate
-                  }
-                }
-                pageInfo { hasNextPage endCursor }
-              }
-            }
-          }
-        }
-      }
-    }
-  }`;
-
 const repositoryDetailsQuery = `
   query ($owner: String!, $name: String!, $searchQuery: String!) {
     repository(owner: $owner, name: $name) {
@@ -343,7 +314,18 @@ export async function ghRequest(query: string, variables: Record<string, any>, r
 				body: JSON.stringify({ query, variables }),
 			});
 
-			const json: GraphQLResponse<any> = await res.json();
+			const bodyText = await res.text();
+			let json: GraphQLResponse<any>;
+			try {
+				json = JSON.parse(bodyText) as GraphQLResponse<any>;
+			} catch (parseError) {
+				const preview = bodyText.replace(/\s+/g, " ").trim().slice(0, 200);
+				throw new Error(`Failed to parse JSON response (${res.status} ${res.statusText}). Body preview: ${preview || "<empty>"}`);
+			}
+
+			if (!res.ok) {
+				throw new Error(`GitHub API responded ${res.status} ${res.statusText}`);
+			}
 
 			// Check for rate limiting
 			if (json.errors && json.errors.some((error: any) => error.type === "RATE_LIMITED")) {
@@ -358,26 +340,35 @@ export async function ghRequest(query: string, variables: Record<string, any>, r
 			if (json.errors) throw new Error(JSON.stringify(json.errors));
 			return json.data;
 		} catch (error) {
-			if (attempt === retries - 1) throw error;
-			console.log(`⚠️  Request failed, retrying in 5 seconds... (attempt ${attempt + 1}/${retries})`, error.message, query, variables);
+			const message = error instanceof Error ? error.message : String(error);
+			const attemptLabel = `attempt ${attempt + 1}/${retries}`;
+			if (attempt === retries - 1) {
+				console.log(`❌ Request failed, no more retries (${attemptLabel})`, message, query, variables);
+				throw error;
+			}
+			console.log(`⚠️  Request failed, retrying in 5 seconds... (${attemptLabel})`, message, query, variables);
 			await new Promise((resolve) => setTimeout(resolve, 5000));
 		}
 	}
 }
 
-export async function fetchRepositoryDetails(owner: string, name: string, author: string): Promise<{ details: RepositoryDetails | null; pullRequests: any[] }> {
+export async function fetchRepositoryDetails(
+	owner: string,
+	name: string,
+	author: string,
+): Promise<{ details: RepositoryDetails | null; pullRequests: any[] }> {
 	try {
 		const searchQuery = `repo:${owner}/${name} type:pr author:${author}`;
 		const data = await ghRequest(repositoryDetailsQuery, { owner, name, searchQuery });
 		return {
 			details: data.repository,
-			pullRequests: data.pullRequests?.nodes || []
+			pullRequests: data.pullRequests?.nodes || [],
 		};
 	} catch (error) {
 		console.log(`⚠️  Failed to fetch repository details for ${owner}/${name}:`, error);
 		return {
 			details: null,
-			pullRequests: []
+			pullRequests: [],
 		};
 	}
 }
@@ -396,67 +387,49 @@ export async function fetchCommits(owner: string, name: string, authorId: string
 	let totalCommits = 0;
 	let processedRefs = 0;
 
-	// First, try to fetch all commits from all refs at once
-	const allCommitsData = await ghRequest(allCommitsQuery, { owner, name, authorId });
-	const refsConn = allCommitsData.repository?.refs;
-	const totalRefs = refsConn?.nodes?.length || 0;
+	// Fetch all refs with pagination to avoid heavy queries
+	const refNames: string[] = [];
+	let refCursor: string | null = null;
+	while (true) {
+		const refsData = await ghRequest(refsQuery, { owner, name, refCursor });
+		const refsConn = refsData.repository?.refs;
+		if (!refsConn?.nodes?.length) break;
+		refsConn.nodes.forEach((node: any) => refNames.push(node.name));
+		if (!refsConn.pageInfo?.hasNextPage) break;
+		refCursor = refsConn.pageInfo.endCursor;
+		// Add small delay between requests
+		await new Promise((resolve) => setTimeout(resolve, 100));
+	}
 
+	const totalRefs = refNames.length;
 	// Update progress bar total if provided
 	if (progressBar) {
 		progressBar.setTotal(totalRefs);
 	}
 
-	if (!refsConn?.nodes) {
+	if (!totalRefs) {
 		return [];
 	}
 
-	// Process each ref from the bulk fetch
-	for (const refNode of refsConn.nodes) {
-		const refName = refNode.name;
+	// Process each ref individually
+	for (const refName of refNames) {
 		let refCommits = 0;
+		let commitCursor: string | null = null;
 
-		// Get commits from the bulk fetch
-		const history = refNode.target?.history;
-		if (history?.edges) {
-			history.edges.forEach((e: any) => {
-				const { oid, messageHeadline, committedDate } = e.node;
-				if (commitsMap.has(oid)) {
-					// Commit already exists, just add the ref if it's not already there
-					const existing = commitsMap.get(oid)!;
-					if (!existing.refs.includes(refName)) {
-						existing.refs.push(refName);
-					}
-				} else {
-					// New commit, add it to the map
-					commitsMap.set(oid, {
-						oid,
-						messageHeadline,
-						committedDate,
-						refs: [refName],
-					});
-					totalCommits++;
-					refCommits++;
-				}
+		while (true) {
+			const commitData = await ghRequest(commitsByRefQuery, {
+				owner,
+				name,
+				ref: `refs/heads/${refName}`,
+				authorId,
+				cursor: commitCursor,
 			});
-		}
 
-		// If this ref has more pages, fetch them individually
-		if (history?.pageInfo?.hasNextPage) {
-			let commitCursor = history.pageInfo.endCursor;
+			const history = commitData.repository?.ref?.target?.history;
+			if (!history) break;
 
-			while (true) {
-				const commitData = await ghRequest(commitsByRefQuery, {
-					owner,
-					name,
-					ref: `refs/heads/${refName}`,
-					authorId,
-					cursor: commitCursor,
-				});
-
-				const additionalHistory = commitData.repository?.ref?.target?.history;
-				if (!additionalHistory) break;
-
-				additionalHistory.edges.forEach((e: any) => {
+			if (history.edges) {
+				history.edges.forEach((e: any) => {
 					const { oid, messageHeadline, committedDate } = e.node;
 					if (commitsMap.has(oid)) {
 						// Commit already exists, just add the ref if it's not already there
@@ -476,12 +449,12 @@ export async function fetchCommits(owner: string, name: string, authorId: string
 						refCommits++;
 					}
 				});
-
-				if (!additionalHistory.pageInfo.hasNextPage) break;
-				commitCursor = additionalHistory.pageInfo.endCursor;
-				// Add small delay between requests
-				await new Promise((resolve) => setTimeout(resolve, 100));
 			}
+
+			if (!history.pageInfo?.hasNextPage) break;
+			commitCursor = history.pageInfo.endCursor;
+			// Add small delay between requests
+			await new Promise((resolve) => setTimeout(resolve, 100));
 		}
 
 		processedRefs++;
@@ -524,7 +497,7 @@ export async function downloadAllRepos(
 	options: {
 		updateDetailsOnly?: boolean;
 		skipRepoDiscovery?: boolean;
-	} = {}
+	} = {},
 ): Promise<void> {
 	if (!TOKEN || !LOGIN) {
 		console.error("Usage: GH_TOKEN=token node contributed-repos.js <github_login>");
@@ -593,6 +566,7 @@ export async function downloadAllRepos(
 	const allCommitsData: Record<string, any[]> = {};
 	const allRepositoryDetails: Record<string, RepositoryDetails | null> = {};
 	const allPullRequestsData: Record<string, any[]> = {};
+	const failedRepos: Array<{ repo: string; error: string }> = [];
 
 	// Load existing data if updating details only
 	let existingData: any = null;
@@ -612,66 +586,85 @@ export async function downloadAllRepos(
 	await queue.addAll(
 		[...repos.values()].map((repo) => async () => {
 			const [owner, name] = repo.split("/");
+			let commitProgressBar: cliProgress.SingleBar | null = null;
 
-			// Fetch repository details and pull requests together
-			const { details: repoDetails, pullRequests } = await fetchRepositoryDetails(owner, name, LOGIN);
-			allRepositoryDetails[repo] = repoDetails;
-			allPullRequestsData[repo] = pullRequests;
+			try {
+				// Fetch repository details and pull requests together
+				const { details: repoDetails, pullRequests } = await fetchRepositoryDetails(owner, name, LOGIN);
+				allRepositoryDetails[repo] = repoDetails;
+				allPullRequestsData[repo] = pullRequests;
 
-			// Skip commits if updating details only
-			if (!options.updateDetailsOnly) {
-				// Create individual progress bar for commits in this repo
-				const commitProgressBar = new cliProgress.SingleBar({
-					format: `Commits for ${repo} |{bar}| {percentage}% | {value} refs | Current: {ref} | Commits: {totalCommits} | ETA: {eta}s`,
-					barCompleteChar: "\u2588",
-					barIncompleteChar: "\u2591",
-					hideCursor: true,
-				});
+				// Skip commits if updating details only
+				if (!options.updateDetailsOnly) {
+					// Create individual progress bar for commits in this repo
+					commitProgressBar = new cliProgress.SingleBar({
+						format: `Commits for ${repo} |{bar}| {percentage}% | {value} refs | Current: {ref} | Commits: {totalCommits} | ETA: {eta}s`,
+						barCompleteChar: "\u2588",
+						barIncompleteChar: "\u2591",
+						hideCursor: true,
+					});
 
-				commitProgressBar.start(1, 0, { ref: "Starting...", totalCommits: 0 }); // Will be updated with actual ref count
+					commitProgressBar.start(1, 0, { ref: "Starting...", totalCommits: 0 }); // Will be updated with actual ref count
 
-				const commits = await fetchCommits(owner, name, userId, commitProgressBar);
+					const commits = await fetchCommits(owner, name, userId, commitProgressBar);
 
-				// Store commits data for this repository
-				allCommitsData[repo] = commits;
-
-				// Complete the commit progress bar
-				commitProgressBar.stop();
-			} else {
-				// Use existing commits data
-				allCommitsData[repo] = existingData.repositories[repo].commits;
+					// Store commits data for this repository
+					allCommitsData[repo] = commits;
+				} else {
+					// Use existing commits data
+					allCommitsData[repo] = existingData.repositories[repo].commits;
+				}
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				failedRepos.push({ repo, error: message });
+				delete allRepositoryDetails[repo];
+				delete allPullRequestsData[repo];
+				delete allCommitsData[repo];
+			} finally {
+				if (commitProgressBar) {
+					commitProgressBar.stop();
+				}
 			}
 
 			// Update overall progress
 			repoIndex++;
 			overallProgressBar.update(repoIndex, { repo });
-		})
+		}),
 	);
 
 	// Complete overall progress bar
 	overallProgressBar.stop();
 	console.log(`\n🎉 All repositories processed! Total: ${repos.size} repositories`);
+	if (failedRepos.length) {
+		console.log(`\nWARN: Skipped ${failedRepos.length} repositories due to errors:`);
+		failedRepos.forEach(({ repo, error }) => {
+			console.log(`- ${repo}: ${error}`);
+		});
+	}
 
 	// Save all commit data, repository details, and pull requests to file
 	const fs = require("fs");
-	
+
 	// Filter out excluded repositories
-	const filteredRepos = Object.keys(allCommitsData).filter(repoName => !EXCLUDED_REPOS.includes(repoName));
-	
+	const filteredRepos = Object.keys(allCommitsData).filter((repoName) => !EXCLUDED_REPOS.includes(repoName));
+
 	const outputData = {
 		user: LOGIN,
 		totalRepositories: filteredRepos.length,
 		totalCommits: filteredRepos.reduce((sum, repoName) => sum + allCommitsData[repoName].length, 0),
 		totalPullRequests: filteredRepos.reduce((sum, repoName) => sum + (allPullRequestsData[repoName] || []).length, 0),
 		generatedAt: new Date().toISOString(),
-		repositories: filteredRepos.reduce((acc, repoName) => {
-			acc[repoName] = {
-				details: allRepositoryDetails[repoName],
-				commits: allCommitsData[repoName],
-				pullRequests: allPullRequestsData[repoName] || [],
-			};
-			return acc;
-		}, {} as Record<string, { details: RepositoryDetails | null; commits: any[]; pullRequests: any[] }>),
+		repositories: filteredRepos.reduce(
+			(acc, repoName) => {
+				acc[repoName] = {
+					details: allRepositoryDetails[repoName],
+					commits: allCommitsData[repoName],
+					pullRequests: allPullRequestsData[repoName] || [],
+				};
+				return acc;
+			},
+			{} as Record<string, { details: RepositoryDetails | null; commits: any[]; pullRequests: any[] }>,
+		),
 	};
 
 	const outputFile = `commits.json`;
@@ -680,7 +673,7 @@ export async function downloadAllRepos(
 	console.log(`📊 Total commits across all repositories: ${outputData.totalCommits}`);
 	console.log(`📊 Total pull requests across all repositories: ${outputData.totalPullRequests}`);
 	console.log(
-		`📋 Repository details fetched for ${Object.values(allRepositoryDetails).filter((details) => details !== null).length} repositories`
+		`📋 Repository details fetched for ${Object.values(allRepositoryDetails).filter((details) => details !== null).length} repositories`,
 	);
 }
 

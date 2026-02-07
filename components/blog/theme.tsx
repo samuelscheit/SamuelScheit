@@ -1,41 +1,23 @@
 import Link from "next/link";
-import { Code, Pre, Table, Td, Th, Tr } from "nextra/components";
-import type { MDXComponents } from "nextra/mdx";
-import { ComponentProps, ReactElement, ReactNode, RefObject, useRef } from "react";
-import { createContext, createRef, useContext, useEffect, useState } from "react";
-import type { NextraThemeLayoutProps } from "nextra";
-import { MDXProvider } from "nextra/mdx";
-import { LayoutProps } from "nextra-theme-blog";
-import { createPortal } from "react-dom";
+import { Code, Pre, Table } from "nextra/components";
+import type { MDXComponents } from "nextra/mdx-components";
+import type { $NextraMetadata, MDXWrapper } from "nextra";
+import { ComponentProps, ReactElement, ReactNode } from "react";
+import type { UrlObject } from "url";
 import { Links } from "../Links";
 import { Link as ExternalLink } from "../Link";
 import Head from "next/head";
 
-const BlogContext = createContext<LayoutProps | null>(null);
-
-export const BlogProvider = BlogContext.Provider;
-
-export const useBlogContext = () => {
-	const value = useContext(BlogContext);
-	if (!value) {
-		throw new Error("useBlogContext must be used within a BlogProvider");
-	}
-	return value;
+type BlogMetadata = $NextraMetadata & {
+	date?: string;
+	description?: string;
+	tags?: string;
+	language?: string;
 };
 
-export const HeadingContext = createContext<RefObject<HTMLHeadingElement | null>>(createRef());
-
-const H1 = ({ children }: { children?: ReactNode }): ReactElement => {
-	const ref = useContext(HeadingContext);
-	const { opts } = useBlogContext();
-	const [showHeading, setShowHeading] = useState(false);
-	useEffect(() => {
-		if (ref.current && opts.hasJsxInH1) {
-			setShowHeading(true);
-		}
-	}, [opts.hasJsxInH1, ref]);
-	return <>{showHeading && createPortal(children, ref.current!)}</>;
-};
+const H1 = () => null;
+type LinkHref = string | UrlObject;
+type AnchorProps = Omit<ComponentProps<"a">, "href"> & { href?: LinkHref };
 
 function HeadingLink({
 	tag: Tag,
@@ -49,28 +31,41 @@ function HeadingLink({
 			id={id}
 			className={
 				// can be added by footnotes
-				className === "sr-only" ? "_sr-only" : `subheading-${Tag}`
+				className === "sr-only" ? "sr-only" : `subheading-${Tag}`
 			}
 			{...props}
 		>
 			{children}
-			{id && <a href={`#${id}`} className="_not-prose subheading-anchor" aria-label="Permalink for this section" />}
+			{id && <a href={`#${id}`} className="not-prose subheading-anchor" aria-label="Permalink for this section" />}
 		</Tag>
 	);
 }
 
-const EXTERNAL_HREF_REGEX = /https?:\/\//;
+function toHrefString(href?: LinkHref): string {
+	if (typeof href === "string") return href;
+	if (!href) return "";
+	if (typeof href.pathname === "string") return href.pathname;
+	return "";
+}
 
-const A = ({ children, href = "", ...props }: ComponentProps<"a">) => {
-	const ComponentToUse = href.startsWith("#") ? "a" : ExternalLink;
+const A = ({ children, href, ...props }: AnchorProps): ReactElement => {
+	const hrefString = toHrefString(href);
+	if (hrefString.startsWith("#")) {
+		return (
+			<a href={hrefString} {...props}>
+				{children}
+			</a>
+		);
+	}
+
 	return (
-		<ComponentToUse href={href} {...props}>
-			{children}
-		</ComponentToUse>
+		<ExternalLink href={hrefString} {...props}>
+			{children as ReactNode}
+		</ExternalLink>
 	);
 };
 
-export const components: MDXComponents = {
+export const blogMdxComponents: MDXComponents = {
 	h1: H1,
 	h2: (props) => <HeadingLink tag="h2" {...props} />,
 	h3: (props) => <HeadingLink tag="h3" {...props} />,
@@ -79,118 +74,123 @@ export const components: MDXComponents = {
 	h6: (props) => <HeadingLink tag="h6" {...props} />,
 	a: A,
 	pre: ({ children, ...props }) => (
-		<Pre className="_not-prose" {...props}>
+		<Pre className="not-prose" {...props}>
 			{children}
 		</Pre>
 	),
-	tr: Tr,
-	th: Th,
-	td: Td,
-	table: (props) => <Table className="_not-prose" {...props} />,
+	tr: Table.Tr,
+	th: Table.Th,
+	td: Table.Td,
+	table: (props) => <Table className="not-prose" {...props} />,
 	code: Code,
 };
 
-export default function Layout({ children, pageOpts, pageProps, themeConfig }: NextraThemeLayoutProps) {
-	const config = { ...themeConfig };
-	const { title: pageTitle, frontMatter } = pageOpts;
-	const date = new Date(frontMatter.date);
-	const tags: string[] = frontMatter.tags?.split(", ") ?? [];
-	const { language } = frontMatter;
-	const isEn = language !== "de";
+function parseDate(date?: string): Date | null {
+	if (!date) return null;
+	const parsed = new Date(date);
+	return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
-	const ref = useRef<HTMLHeadingElement>(null);
-	const title = `${pageTitle}${config.titleSuffix || ""}`;
+function parseTags(tags?: string): string[] {
+	if (!tags) return [];
+	return tags
+		.split(",")
+		.map((tag) => tag.trim())
+		.filter(Boolean);
+}
+
+export const BlogWrapper: MDXWrapper = ({ children, metadata }) => {
+	const blogMetadata = metadata as BlogMetadata;
+	const title = blogMetadata.title;
+	const date = parseDate(blogMetadata.date);
+	const tags = parseTags(blogMetadata.tags);
+	const { language } = blogMetadata;
+	const isEn = language !== "de";
+	const description = blogMetadata.description;
 
 	return (
 		<>
 			<div className="main blog">
 				<Head>
 					<title>{title}</title>
-					<meta name="og:description" content={frontMatter.description} />
-					{config.head?.({ title, meta: frontMatter })}
+					{description ? <meta name="og:description" content={description} /> : null}
 				</Head>
 				<div className="links-wrapper">
 					<Links>
-						<Link href="/" title="Back" className="_absolute max-md:_hidden" style={{ left: "30px", top: "40px" }}>
+						<Link href="/" title="Back" className="x:absolute x:max-md:hidden" style={{ left: "30px", top: "40px" }}>
 							<svg xmlns="http://www.w3.org/2000/svg" width="2.3rem" height="2.3rem" viewBox="0 0 24 24">
 								<path fill="currentColor" d="m15.914 17.5l-5.5-5.5l5.5-5.5L14.5 5.086L7.586 12l6.914 6.914z"></path>
 							</svg>
 						</Link>
 					</Links>
 				</div>
-				<BlogProvider value={{ config, opts: pageOpts }}>
-					<MDXProvider components={{ ...components, ...config.components }}>
-						<article
-							className="_container _prose max-md:_prose-sm _pt-6 dark:_prose-invert _relative"
-							dir="ltr"
-							style={{ fontSize: "18px" }}
+				<article
+					className="x:container x:prose x:max-md:prose-sm x:!pt-6 x:dark:prose-invert x:relative"
+					dir="ltr"
+					style={{ fontSize: "18px" }}
+				>
+					<div className="x:flex x:justify-center x:z-10 x:pb-10">
+						<Link
+							href={"/"}
+							className="x:text-center x:p-4 x:text-4xl x:font-bold x:bg-clip-text x:!text-transparent"
+							style={{
+								backgroundImage: "linear-gradient(90deg, rgba(0,124,240,1) 23%, rgba(0,223,216,1) 71%)",
+								textDecoration: "none",
+							}}
 						>
-							<div className="_flex _justify _z-10 _pb-10 _justify-center">
-								<Link
-									href={"/"}
-									className="_text-center _p-4 _text-4xl _font-bold _bg-clip-text _text-transparent"
-									style={{
-										backgroundImage: "linear-gradient(90deg, rgba(0,124,240,1) 23%, rgba(0,223,216,1) 71%)",
-										textDecoration: "none",
-									}}
-								>
-									Samuel Scheit
-								</Link>
-							</div>
-							<HeadingContext.Provider value={ref}>
-								{pageOpts.hasJsxInH1 ? <h1 ref={ref} /> : null}
-								{pageOpts.hasJsxInH1 ? null : <h1 style={{ textAlign: "center" }}>{pageTitle}</h1>}
-								<div className="_flex _flex-row _w-full _text-xs _text-center _gap-6 _items-center">
-									{date && date.toISOString && (
-										<time className=" _font-mono " dateTime={date.toISOString()}>
-											{date.toLocaleDateString("en-US", {
-												dateStyle: "long",
-											})}
-										</time>
-									)}
-									{tags.length > 0 && (
-										<div className="_flex _justify-center _gap-2 _items-center">
-											{tags.map((tag) => (
-												<div key={tag} className="_text-sm _bg-gray-50 dark:_bg-gray-900 _p-2 _rounded-md">
-													{tag}
-												</div>
-											))}
-										</div>
-									)}
-								</div>
+							Samuel Scheit
+						</Link>
+					</div>
 
-								{children}
-							</HeadingContext.Provider>
-							<footer className="_mt-20 _mb-40 _text-center _flex _flex-col _gap-2">
-								<div className="_text-2xl _font-semibold _mb-4">
-									{isEn ? `Thank you for reading!` : `Danke fürs lesen!`}
-								</div>
-								<div>
-									{isEn
-										? "If you want to support me you can sponsor me on "
-										: "Wenn du mich unterstützen möchtest kannst du mir spenden auf "}
-									<ExternalLink
-										style={{ textDecoration: "none", fontWeight: 600 }}
-										href="https://github.com/sponsors/SamuelScheit"
-									>
-										GitHub
-									</ExternalLink>{" "}
-									🫶
-								</div>
-								<div>
-									{isEn
-										? `If you have any questions or feedback, feel free to contact me. 👨‍💻`
-										: `Wenn du Fragen oder Feedback hast, kannst du mir gerne schreiben. 👨‍💻`}
-								</div>
-								<div className="contact-links links-wrapper _mt-20">
-									<Links />
-								</div>
-							</footer>
-						</article>
-					</MDXProvider>
-				</BlogProvider>
+					<h1 style={{ textAlign: "center" }}>{title}</h1>
+
+					<div className="x:flex x:flex-row x:w-full x:text-xs x:text-center x:gap-6 x:items-center">
+						{date ? (
+							<time className=" x:font-mono " dateTime={date.toISOString()}>
+								{date.toLocaleDateString("en-US", {
+									dateStyle: "long",
+								})}
+							</time>
+						) : null}
+						{tags.length > 0 ? (
+							<div className="x:flex x:justify-center x:gap-2 x:items-center">
+								{tags.map((tag) => (
+									<div key={tag} className="x:text-sm x:bg-gray-50 x:dark:bg-gray-900 x:p-2 x:rounded-md">
+										{tag}
+									</div>
+								))}
+							</div>
+						) : null}
+					</div>
+
+					{children}
+
+					<footer className="x:mt-20 x:mb-40 x:text-center x:flex x:flex-col x:gap-2">
+						<div className="x:text-2xl x:font-semibold x:mb-4">{isEn ? `Thank you for reading!` : `Danke fürs lesen!`}</div>
+						<div>
+							{isEn
+								? "If you want to support me you can sponsor me on "
+								: "Wenn du mich unterstützen möchtest kannst du mir spenden auf "}
+							<ExternalLink
+								style={{ textDecoration: "none", fontWeight: 600 }}
+								href="https://github.com/sponsors/SamuelScheit"
+							>
+								GitHub
+							</ExternalLink>{" "}
+							🫶
+						</div>
+						<div>
+							{isEn
+								? `If you have any questions or feedback, feel free to contact me. 👨‍💻`
+								: `Wenn du Fragen oder Feedback hast, kannst du mir gerne schreiben. 👨‍💻`}
+						</div>
+						<div className="contact-links links-wrapper x:mt-20">
+							<Links />
+						</div>
+					</footer>
+				</article>
 				<div className="links-wrapper" style={{ width: "100px" }}></div>
 			</div>
 		</>
 	);
-}
+};
