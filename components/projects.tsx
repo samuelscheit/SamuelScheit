@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import Image from "next/image";
+import Image from "next-image-export-optimizer";
 import Spacebar from "../public/projects/spacebar.png";
 import DiscordBotClient from "../public/projects/discord_bot_client.png";
 import CarcassonneAI from "../public/projects/carcassonne_ai.png";

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next-image-export-optimizer";
 import { Timeline, TimelineItem } from "./timeline";
 import { Link } from "./Link";
 

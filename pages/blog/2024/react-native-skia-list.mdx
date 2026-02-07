@@ -78,7 +78,7 @@ To combat the issue of blocking the main JS thread, react-native-skia provides t
 
 However, the issue is that for each frame, a new canvas has to be created, and the image has to be sent between the threads, resulting in high memory usage:
 
-import Image from "next/image";
+import Image from "next-image-export-optimizer";
 import Memory from "./react-native-skia-list/memory.png";
 
 <Image src={Memory} alt="React Native Skia Image Offscreen Memory Usage" style={{ width: "70%" }} />
