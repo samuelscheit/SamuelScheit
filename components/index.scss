@@ -97,6 +97,9 @@
 
 @media screen and (max-width: 800px) {
 	.main {
+		.content {
+			padding-inline: 20px;
+		}
 		.content .navigation {
 			margin: 0;
 		}
@@ -104,8 +107,13 @@
 			display: none;
 		}
 
-		&.blog .links-wrapper:not(.contact-links) {
-			display: none;
+		&.blog {
+			.links-wrapper:not(.contact-links) {
+				display: none;
+			}
+			article {
+				padding-inline: 20px;
+			}
 		}
 
 		&:not(.blog) {
@@ -315,6 +323,7 @@ a {
 
 * {
 	box-sizing: border-box;
+	word-break: break-word;
 }
 
 body,

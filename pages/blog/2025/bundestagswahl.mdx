@@ -67,7 +67,7 @@ import Thueringen from "./bundestagswahl/thueringen.png";
 import Sachsen from "./bundestagswahl/sachsen.png";
 import Krzn from "./bundestagswahl/krzn.png";
 
-<div className="x:grid x:grid-cols-1 x:md:grid-cols-2 x:gap-6 x:text-center" style={{gridTemplateColumns:"1fr 1fr"}}>
+<div className="x:grid x:grid-cols-1 x:md:grid-cols-2 x:gap-6 x:text-center">
 	<div className="x:flex x:flex-col x:justify-between">
 		<Image src={Votegroup} className="" alt="Wahlabwicklungssystem" style={{margin:"0"}} />
 		<div>
@@ -211,7 +211,7 @@ ChatGPT zeigt folgende mögliche Ursachen für die Diskrepanzen:
     - **Korrekturen nach erneuter Prüfung**: Nach der ersten Erfassung werden die Wahlergebnisse von den Wahlleitern geprüft, was zu Anpassungen führen kann.
     - **Fehlende Berücksichtigung von Nachmeldungen**: Manche verspäteten Meldungen werden erst im endgültigen Wahlergebnis berücksichtigt.
 
-Solche menschlichen Fehler sind erwartbar bei einer Wahl mit 299 Wahlkreisen, ~675.000 Wahlhelfern und 49.927.315 abgegebenen Stimmen. Erfreulicherweise sind die Diskrepanzen sehr gering und haben keinen Einfluss auf das Wahlergebnis.
+Solche menschlichen Fehler sind erwartbar bei einer Wahl mit 299 Wahlkreisen, ~675.000 Wahlhelfern und 49.927.315 abgegebenen Stimmen. Erfreulicherweise sind die Diskrepanzen sehr gering und haben keinen relevanten Einfluss auf das Wahlergebnis.
 
 Zudem wurde bei der Bundeswahlleiterin nur das vorläufige Ergebnis veröffentlicht. Das endgültige Ergebnis wird erst nach der Prüfung der Wahlkreise veröffentlicht, bei der etwaige Fehler noch korrigiert werden.
 
@@ -237,3 +237,14 @@ Ich habe hier drauf verzichtet, weil kleine Fehler beim Direktmandat keine Auswi
 Wenn man die Auswertung noch weiter in der Tiefe betreiben möchte, dann könnte man nicht nur die Bundeswahlleiter Ergebnisse überprüfen, sondern auch die Kreiswahlergebnisse. Indem man die Stimmen aus den einzelnen Gemeinden aggregiert und vergleicht.
 
 Das Problem dabei ist, dass einige Gemeinden die Ergebnisse nicht online zur Verfügung stellen oder in einem eigenen Format veröffentlichen, dass die Automatisierung erschwert.
+
+## Update
+
+import Map from "./bundestagswahl/map.png";
+
+Mithilfe der gesammelten Daten habe ich eine interaktive Wahlkarte erstellt, die die Ergebnisse für jede Gemeinde zeigt: \
+[bundestagswahl.samuelscheit.com](https://bundestagswahl.samuelscheit.com/)
+
+<Link href="https://bundestagswahl.samuelscheit.com/" target="_blank">
+	<Image src={Map} style={{ height: "fit-content", margin: "0" }} />
+</Link>
