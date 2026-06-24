@@ -28,7 +28,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev --webpack",
-		"build": "next build && next-sitemap --config next-sitemap.config.mjs && next-image-export-optimizer",
+		"build": "next build --webpack && next-sitemap --config next-sitemap.config.mjs && next-image-export-optimizer",
 		"start": "next start",
 		"lint": "next lint",
 		"screenshot": "node screenshot.js",
