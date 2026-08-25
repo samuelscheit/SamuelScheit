@@ -1,6 +1,5 @@
 // file: contributed-repos.js
 import fetch from "node-fetch";
-import { parseISO, addDays, addYears, isAfter } from "date-fns";
 import { config } from "dotenv";
 import cliProgress from "cli-progress";
 import PQueue from "p-queue";
@@ -21,6 +20,37 @@ const EXCLUDED_REPOS = [
 	"SamuelScheit/SamuelScheit",
 	"SamuelScheit/whatsapp-tracker",
 ];
+const EXCLUDED_REPO_KEYS = new Set(EXCLUDED_REPOS.map((repository) => repository.toLowerCase()));
+
+// GitHub returns a top-level FORBIDDEN error for
+// `commitContributionsByRepository` when even one of the user's contributed
+// repositories belongs to an organization that blocks classic PATs.  Keep
+// those organizations out of discovery up front.  ExodusMovement is the
+// known blocked organization for the token used by this downloader; more
+// organizations can be supplied through GITHUB_EXCLUDED_ORGS and are also
+// learned from partial GraphQL errors below.
+const EXCLUDED_ORGS = new Set(
+	[
+		"ExodusMovement",
+		...(process.env.GITHUB_EXCLUDED_ORGS || "")
+			.split(",")
+			.map((org) => org.trim())
+			.filter(Boolean),
+	].map((org) => org.toLowerCase()),
+);
+
+function isExcludedRepository(repository: string): boolean {
+	const [owner] = repository.split("/", 1);
+	return EXCLUDED_REPO_KEYS.has(repository.toLowerCase()) || EXCLUDED_ORGS.has(owner.toLowerCase());
+}
+
+function rememberForbiddenOrganizations(errors: any[] | undefined): void {
+	for (const error of errors || []) {
+		if (error?.type !== "FORBIDDEN") continue;
+		const match = String(error.message || "").match(/`([^`]+)` forbids access/i);
+		if (match?.[1]) EXCLUDED_ORGS.add(match[1].toLowerCase());
+	}
+}
 
 // TypeScript interfaces for GraphQL responses
 interface Repository {
@@ -114,18 +144,6 @@ interface RepositoryDetails {
 	};
 }
 
-interface CommitContribution {
-	repository: Repository;
-}
-
-interface ContributionsCollection {
-	commitContributionsByRepository: CommitContribution[];
-}
-
-interface User {
-	contributionsCollection: ContributionsCollection;
-}
-
 interface YearsData {
 	user: {
 		id: string;
@@ -135,8 +153,16 @@ interface YearsData {
 	};
 }
 
-interface WindowData {
-	user: User;
+interface ContributedRepositoriesData {
+	user: {
+		repositoriesContributedTo: {
+			nodes: Array<Repository | null>;
+			pageInfo: {
+				hasNextPage: boolean;
+				endCursor: string | null;
+			};
+		};
+	};
 }
 
 interface GraphQLResponse<T> {
@@ -145,11 +171,6 @@ interface GraphQLResponse<T> {
 }
 
 // Function parameter and return types
-interface GhRequestParams {
-	query: string;
-	variables: Record<string, any>;
-}
-
 const yearsQuery = `
   query ($login: String!) {
     user(login: $login) {
@@ -158,13 +179,20 @@ const yearsQuery = `
     }
   }`;
 
-const windowQuery = `
-  query ($login: String!, $from: DateTime!, $to: DateTime!) {
+// Unlike contributionsCollection.commitContributionsByRepository, this
+// connection returns null for repositories the token cannot read and keeps
+// the remaining repositories in the response.  That lets us skip blocked
+// organizations instead of failing the entire discovery request.
+const contributedRepositoriesQuery = `
+  query ($login: String!, $cursor: String) {
     user(login: $login) {
-      contributionsCollection(from: $from, to: $to) {
-        commitContributionsByRepository(maxRepositories: 100) {
-          repository { nameWithOwner }
-        }
+      repositoriesContributedTo(
+        first: 100
+        after: $cursor
+        contributionTypes: [COMMIT]
+      ) {
+        nodes { nameWithOwner }
+        pageInfo { hasNextPage endCursor }
       }
     }
   }`;
@@ -302,7 +330,7 @@ const repositoryDetailsQuery = `
     }
   }`;
 
-export async function ghRequest(query: string, variables: Record<string, any>, retries = 3): Promise<any> {
+export async function ghRequest(query: string, variables: Record<string, any>, retries = 3, allowPartialErrors = false): Promise<any> {
 	for (let attempt = 0; attempt < retries; attempt++) {
 		try {
 			const res = await fetch("https://api.github.com/graphql", {
@@ -337,7 +365,14 @@ export async function ghRequest(query: string, variables: Record<string, any>, r
 				continue;
 			}
 
-			if (json.errors) throw new Error(JSON.stringify(json.errors));
+			if (json.errors) {
+				rememberForbiddenOrganizations(json.errors);
+				const onlyForbiddenErrors = json.errors.every((error: any) => error?.type === "FORBIDDEN");
+				if (!allowPartialErrors || !onlyForbiddenErrors || !json.data) {
+					throw new Error(JSON.stringify(json.errors));
+				}
+				console.warn(`⚠️  Skipping ${json.errors.length} inaccessible GitHub resource(s) during discovery.`);
+			}
 			return json.data;
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
@@ -477,20 +512,28 @@ export async function fetchCommits(owner: string, name: string, authorId: string
 	}));
 }
 
-export async function fetchReposForWindow(login: string, from: Date, to: Date, out: Set<string>): Promise<void> {
-	const vars = { login, from: from.toISOString(), to: to.toISOString() };
-	const data: WindowData = await ghRequest(windowQuery, vars);
-	const list = data.user.contributionsCollection.commitContributionsByRepository;
-	list.forEach(({ repository }) => out.add(repository.nameWithOwner));
+export async function fetchContributedRepositories(login: string, out: Set<string>): Promise<void> {
+	let cursor: string | null = null;
+	let fetched = 0;
 
-	console.log("fetched", list.length, "repos", "from", from, "to", to);
+	while (true) {
+		const data: ContributedRepositoriesData = await ghRequest(contributedRepositoriesQuery, { login, cursor }, 3, true);
+		const connection = data.user?.repositoriesContributedTo;
+		if (!connection) break;
 
-	// Only split if exactly 100 repos returned (indicating pagination limit)
-	if (list.length === 100 && isAfter(to, addDays(from, 1))) {
-		const mid = new Date((from.getTime() + to.getTime()) / 2);
-		await fetchReposForWindow(login, from, mid, out);
-		await fetchReposForWindow(login, addDays(mid, 1), to, out);
+		for (const repository of connection.nodes || []) {
+			const nameWithOwner = repository?.nameWithOwner;
+			if (!nameWithOwner || isExcludedRepository(nameWithOwner)) continue;
+			out.add(nameWithOwner);
+		}
+
+		fetched += connection.nodes?.length || 0;
+		if (!connection.pageInfo?.hasNextPage) break;
+		cursor = connection.pageInfo.endCursor;
+		if (!cursor) break;
 	}
+
+	console.log(`fetched ${out.size} accessible contributed repositories (${fetched} records inspected)`);
 }
 
 export async function downloadAllRepos(
@@ -512,13 +555,11 @@ export async function downloadAllRepos(
 
 	const repos = new Set<string>();
 
-	// 2. Walk each year and slice as needed (skip if skipRepoDiscovery is true)
+	// 2. Discover contributed repositories.  The repositoriesContributedTo
+	// connection tolerates inaccessible organization nodes, unlike the old
+	// contributionsCollection field that aborts the whole request.
 	if (!options.skipRepoDiscovery) {
-		for (const y of years) {
-			const yearStart = parseISO(`${y}-01-01T00:00:00Z`);
-			const yearEnd = addYears(yearStart, 1);
-			await fetchReposForWindow(LOGIN, yearStart, yearEnd, repos);
-		}
+		await fetchContributedRepositories(LOGIN, repos);
 	}
 
 	// Handle updateDetailsOnly mode
@@ -537,7 +578,9 @@ export async function downloadAllRepos(
 		const existingData = JSON.parse(fs.readFileSync(outputFile, "utf8"));
 		const existingRepos = Object.keys(existingData.repositories);
 
-		existingRepos.forEach((repo) => repos.add(repo));
+		existingRepos.forEach((repo) => {
+			if (!isExcludedRepository(repo)) repos.add(repo);
+		});
 
 		console.log(`🔄 Updating repository details for ${repos.size} repositories...`);
 	} else {
@@ -646,7 +689,7 @@ export async function downloadAllRepos(
 	const fs = require("fs");
 
 	// Filter out excluded repositories
-	const filteredRepos = Object.keys(allCommitsData).filter((repoName) => !EXCLUDED_REPOS.includes(repoName));
+	const filteredRepos = Object.keys(allCommitsData).filter((repoName) => !isExcludedRepository(repoName));
 
 	const outputData = {
 		user: LOGIN,
@@ -677,10 +720,11 @@ export async function downloadAllRepos(
 	);
 }
 
-const args = process.argv.slice(2);
+if (require.main === module) {
+	const args = process.argv.slice(2);
 
-if (args.includes("--help") || args.includes("-h")) {
-	console.log(`
+	if (args.includes("--help") || args.includes("-h")) {
+		console.log(`
 GitHub Repository Data Downloader
 
 Usage:
@@ -689,6 +733,7 @@ node github/download.ts [options]
 Options:
 --update-details, -u    Update only repository details (keep existing commit data)
 --skip-discovery, -s    Skip repository discovery, use hardcoded list
+GITHUB_EXCLUDED_ORGS     Comma-separated organization logins to skip (ExodusMovement is skipped by default)
 --help, -h             Show this help message
 
 Examples:
@@ -697,9 +742,10 @@ node github/download.ts --update-details   # Update only repository details
 node github/download.ts -u                 # Short form for update details
 node github/download.ts --skip-discovery   # Skip repo discovery, use hardcoded list
 `);
-} else {
-	downloadAllRepos({
-		updateDetailsOnly: args.includes("--update-details") || args.includes("-u"),
-		skipRepoDiscovery: args.includes("--skip-discovery") || args.includes("-s"),
-	});
+	} else {
+		downloadAllRepos({
+			updateDetailsOnly: args.includes("--update-details") || args.includes("-u"),
+			skipRepoDiscovery: args.includes("--skip-discovery") || args.includes("-s"),
+		});
+	}
 }
