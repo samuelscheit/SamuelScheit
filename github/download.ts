@@ -7,7 +7,8 @@ import PQueue from "p-queue";
 config();
 
 const TOKEN = process.env.GH_TOKEN;
-const LOGIN = "samuelscheit";
+const CLI_LOGIN = process.argv.slice(2).find((argument) => !argument.startsWith("-"));
+const LOGIN = process.env.GITHUB_LOGIN || CLI_LOGIN || "samuelscheit";
 
 const EXCLUDED_REPOS = [
 	"respondchat/assets",
@@ -26,9 +27,8 @@ const EXCLUDED_REPO_KEYS = new Set(EXCLUDED_REPOS.map((repository) => repository
 // `commitContributionsByRepository` when even one of the user's contributed
 // repositories belongs to an organization that blocks classic PATs.  Keep
 // those organizations out of discovery up front.  ExodusMovement is the
-// known blocked organization for the token used by this downloader; more
-// organizations can be supplied through GITHUB_EXCLUDED_ORGS and are also
-// learned from partial GraphQL errors below.
+// known blocked organization for the token used by this downloader. Additional
+// organizations can be supplied through GITHUB_EXCLUDED_ORGS.
 const EXCLUDED_ORGS = new Set(
 	[
 		"ExodusMovement",
@@ -42,14 +42,6 @@ const EXCLUDED_ORGS = new Set(
 function isExcludedRepository(repository: string): boolean {
 	const [owner] = repository.split("/", 1);
 	return EXCLUDED_REPO_KEYS.has(repository.toLowerCase()) || EXCLUDED_ORGS.has(owner.toLowerCase());
-}
-
-function rememberForbiddenOrganizations(errors: any[] | undefined): void {
-	for (const error of errors || []) {
-		if (error?.type !== "FORBIDDEN") continue;
-		const match = String(error.message || "").match(/`([^`]+)` forbids access/i);
-		if (match?.[1]) EXCLUDED_ORGS.add(match[1].toLowerCase());
-	}
 }
 
 // TypeScript interfaces for GraphQL responses
@@ -153,14 +145,10 @@ interface YearsData {
 	};
 }
 
-interface ContributedRepositoriesData {
+interface WindowData {
 	user: {
-		repositoriesContributedTo: {
-			nodes: Array<Repository | null>;
-			pageInfo: {
-				hasNextPage: boolean;
-				endCursor: string | null;
-			};
+		contributionsCollection: {
+			commitContributionsByRepository: Array<{ repository: Repository }>;
 		};
 	};
 }
@@ -179,20 +167,13 @@ const yearsQuery = `
     }
   }`;
 
-// Unlike contributionsCollection.commitContributionsByRepository, this
-// connection returns null for repositories the token cannot read and keeps
-// the remaining repositories in the response.  That lets us skip blocked
-// organizations instead of failing the entire discovery request.
-const contributedRepositoriesQuery = `
-  query ($login: String!, $cursor: String) {
+const windowQuery = `
+  query ($login: String!, $from: DateTime!, $to: DateTime!) {
     user(login: $login) {
-      repositoriesContributedTo(
-        first: 100
-        after: $cursor
-        contributionTypes: [COMMIT]
-      ) {
-        nodes { nameWithOwner }
-        pageInfo { hasNextPage endCursor }
+      contributionsCollection(from: $from, to: $to) {
+        commitContributionsByRepository(maxRepositories: 100) {
+          repository { nameWithOwner }
+        }
       }
     }
   }`;
@@ -330,7 +311,7 @@ const repositoryDetailsQuery = `
     }
   }`;
 
-export async function ghRequest(query: string, variables: Record<string, any>, retries = 3, allowPartialErrors = false): Promise<any> {
+export async function ghRequest(query: string, variables: Record<string, any>, retries = 3): Promise<any> {
 	for (let attempt = 0; attempt < retries; attempt++) {
 		try {
 			const res = await fetch("https://api.github.com/graphql", {
@@ -365,18 +346,14 @@ export async function ghRequest(query: string, variables: Record<string, any>, r
 				continue;
 			}
 
-			if (json.errors) {
-				rememberForbiddenOrganizations(json.errors);
-				const onlyForbiddenErrors = json.errors.every((error: any) => error?.type === "FORBIDDEN");
-				if (!allowPartialErrors || !onlyForbiddenErrors || !json.data) {
-					throw new Error(JSON.stringify(json.errors));
-				}
-				console.warn(`⚠️  Skipping ${json.errors.length} inaccessible GitHub resource(s) during discovery.`);
-			}
+			if (json.errors) throw new Error(JSON.stringify(json.errors));
 			return json.data;
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			const attemptLabel = `attempt ${attempt + 1}/${retries}`;
+			// FORBIDDEN is deterministic for this token/repository. Retrying it
+			// only delays the window bisection that recovers other repositories.
+			if (isForbiddenError(error)) throw error;
 			if (attempt === retries - 1) {
 				console.log(`❌ Request failed, no more retries (${attemptLabel})`, message, query, variables);
 				throw error;
@@ -512,28 +489,52 @@ export async function fetchCommits(owner: string, name: string, authorId: string
 	}));
 }
 
-export async function fetchContributedRepositories(login: string, out: Set<string>): Promise<void> {
-	let cursor: string | null = null;
-	let fetched = 0;
+function isForbiddenError(error: unknown): boolean {
+	return /(?:FORBIDDEN|forbids access)/i.test(String(error instanceof Error ? error.message : error));
+}
 
-	while (true) {
-		const data: ContributedRepositoriesData = await ghRequest(contributedRepositoriesQuery, { login, cursor }, 3, true);
-		const connection = data.user?.repositoriesContributedTo;
-		if (!connection) break;
-
-		for (const repository of connection.nodes || []) {
-			const nameWithOwner = repository?.nameWithOwner;
-			if (!nameWithOwner || isExcludedRepository(nameWithOwner)) continue;
-			out.add(nameWithOwner);
+/**
+ * Discover repositories for a time window. GitHub evaluates
+ * commitContributionsByRepository as one field, so a single inaccessible
+ * organization can poison a whole window. On FORBIDDEN, bisect the window
+ * until the inaccessible day(s) can be skipped while preserving all other
+ * contributions.
+ */
+export async function fetchReposForWindow(login: string, from: Date, to: Date, out: Set<string>): Promise<void> {
+	try {
+		const data: WindowData = await ghRequest(windowQuery, {
+			login,
+			from: from.toISOString(),
+			to: to.toISOString(),
+		});
+		const list = data.user?.contributionsCollection?.commitContributionsByRepository || [];
+		for (const { repository } of list) {
+			if (!repository?.nameWithOwner || isExcludedRepository(repository.nameWithOwner)) continue;
+			out.add(repository.nameWithOwner);
 		}
 
-		fetched += connection.nodes?.length || 0;
-		if (!connection.pageInfo?.hasNextPage) break;
-		cursor = connection.pageInfo.endCursor;
-		if (!cursor) break;
+		console.log("fetched", list.length, "repos", "from", from.toISOString(), "to", to.toISOString());
+		if (list.length < 100 || to.getTime() - from.getTime() <= 24 * 60 * 60 * 1000) return;
+	} catch (error) {
+		if (!isForbiddenError(error) || to.getTime() - from.getTime() <= 24 * 60 * 60 * 1000) {
+			if (isForbiddenError(error)) {
+				console.warn(`⚠️  Skipping inaccessible contribution window ${from.toISOString()} – ${to.toISOString()}.`);
+				return;
+			}
+			throw error;
+		}
+
+		const midpoint = new Date((from.getTime() + to.getTime()) / 2);
+		await fetchReposForWindow(login, from, midpoint, out);
+		await fetchReposForWindow(login, midpoint, to, out);
+		return;
 	}
 
-	console.log(`fetched ${out.size} accessible contributed repositories (${fetched} records inspected)`);
+	// A full window with exactly 100 repositories may be truncated. Split it
+	// even when the request itself succeeded so no repositories are lost.
+	const midpoint = new Date((from.getTime() + to.getTime()) / 2);
+	await fetchReposForWindow(login, from, midpoint, out);
+	await fetchReposForWindow(login, midpoint, to, out);
 }
 
 export async function downloadAllRepos(
@@ -543,7 +544,7 @@ export async function downloadAllRepos(
 	} = {},
 ): Promise<void> {
 	if (!TOKEN || !LOGIN) {
-		console.error("Usage: GH_TOKEN=token node contributed-repos.js <github_login>");
+		console.error("Usage: GH_TOKEN=token bun github/download.ts <github_login>");
 		process.exit(1);
 	}
 
@@ -555,11 +556,14 @@ export async function downloadAllRepos(
 
 	const repos = new Set<string>();
 
-	// 2. Discover contributed repositories.  The repositoriesContributedTo
-	// connection tolerates inaccessible organization nodes, unlike the old
-	// contributionsCollection field that aborts the whole request.
+	// 2. Discover every contribution year. A forbidden organization only makes
+	// its own bisection branch inaccessible; all other windows remain usable.
 	if (!options.skipRepoDiscovery) {
-		await fetchContributedRepositories(LOGIN, repos);
+		for (const year of years) {
+			const from = new Date(`${year}-01-01T00:00:00.000Z`);
+			const to = new Date(`${year + 1}-01-01T00:00:00.000Z`);
+			await fetchReposForWindow(LOGIN, from, to, repos);
+		}
 	}
 
 	// Handle updateDetailsOnly mode
@@ -728,7 +732,7 @@ if (require.main === module) {
 GitHub Repository Data Downloader
 
 Usage:
-node github/download.ts [options]
+GH_TOKEN=token bun github/download.ts [github_login] [options]
 
 Options:
 --update-details, -u    Update only repository details (keep existing commit data)
