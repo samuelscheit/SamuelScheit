@@ -35,3 +35,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env
+
+# Private CV source notes; never publish or commit personal data.
+.cv-private/
+pages/cv/infos.md
