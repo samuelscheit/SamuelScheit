@@ -1,12 +1,9 @@
 """Build Samuel Scheit's complete, recruiter-focused CV.
 
-The website CV (``CV.md``) is intentionally detailed.  The old PDF builder
-selected only two open-source projects and replaced the rest with a generic
-``50+`` link, which made the PDF materially less useful than the source CV.
-Project data now lives in this module as explicit entries so every project that
-is named in the CV is visible in the generated PDF.  Dates use month precision
-whenever the source material provides it; client engagements whose notes only
-contain a year keep that year rather than inventing a month.
+The project portfolio is deliberately curated rather than generated from every
+repository.  Its entries are validated against the local GitHub metadata so
+only projects Samuel created, not contribution-only repositories or forks, can
+appear in the CV.
 """
 
 from datetime import datetime
@@ -24,6 +21,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import (
     HRFlowable,
     KeepTogether,
+    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -294,164 +292,243 @@ def github_project(name: str) -> dict:
     return details
 
 
-def github_created_month(name: str) -> str:
-    created_at = github_project(name).get("createdAt")
-    if not created_at:
-        raise RuntimeError(f"Repository {name!r} has no creation date in the GitHub project data")
-    try:
-        return datetime.fromisoformat(created_at.replace("Z", "+00:00")).strftime("%b %Y")
-    except ValueError as error:
-        raise RuntimeError(f"Invalid creation date for repository {name!r}: {created_at!r}") from error
-
-
-def github_project_title(name: str, role: str, display_name: str | None = None) -> str:
-    details = github_project(name)
-    label = display_name or name
-    # Private repositories are deliberately not linked; their summaries still
-    # communicate the work without exposing an inaccessible destination.
-    if details.get("isPrivate"):
-        return f"{escape(label)} (private) | {escape(role)}"
-    return f"{link(label, details['url'])} | {escape(role)}"
-
-
 @dataclass(frozen=True)
-class CuratedProject:
-    """A recruiter-relevant project validated against the local GitHub export."""
+class PortfolioProject:
+    """A recruiter-relevant project validated against owned GitHub metadata."""
 
     repository: str
     title: str
     role: str
+    date: str
+    sort_date: datetime
     summaries: tuple[str, ...]
-    date: str | None = None
+    url_override: str | None = None
+    show_private_marker: bool = True
 
 
-# This deliberately represents a curated portfolio, not a raw GitHub dump.
-# Every entry is validated as a repository owned by Samuel Scheit and not a
-# fork; private entries remain unlinked in the rendered CV.
-CURATED_PROJECTS: tuple[CuratedProject, ...] = (
-    CuratedProject(
+# This is a curated recruiter portfolio rather than a repository listing. Each
+# record maps to a project owned by Samuel Scheit and not marked as a fork in
+# GitHub metadata.  Entries are rendered newest-first, the standard CV order.
+PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
+    PortfolioProject(
         "npm-malicious-check",
         "npm-malicious-check",
         "Creator - supply-chain security tooling",
+        "May 2026",
+        datetime(2026, 5, 15),
         (
             "Built a Python triage utility that downloads npm malware advisories, normalizes them to CSV, and scans local npm, Bun, and Yarn caches for package/version matches.",
             "Designed the workflow to give developers and incident responders a fast, auditable first check after a supply-chain incident.",
         ),
     ),
-    CuratedProject(
+    PortfolioProject(
+        "phishing.support",
+        "Phishing Support",
+        "Creator",
+        "Jan 2026",
+        datetime(2026, 1, 9),
+        (
+            "Built an open-source tool for automated analysis, reporting, and tracking of phishing emails and malicious websites, including indicator extraction, automated checks, and abuse/takedown workflows.",
+        ),
+        url_override="https://phishing.support",
+    ),
+    PortfolioProject(
         "prediction_arbitrage",
         "Prediction Market Data Platform",
         "Creator - real-time market-data platform",
+        "Sep 2025",
+        datetime(2025, 9, 20),
         (
             "Built a private real-time prediction-market data platform integrating Polymarket and Kalshi HTTP and WebSocket feeds.",
             "Designed reconnection and subscription logic, a TimescaleDB ingestion pipeline, Docker delivery, and a web application for exploring live orders and event data.",
         ),
     ),
-    CuratedProject(
+    PortfolioProject(
+        "wplace-archive",
+        "WPlace World Archive",
+        "Creator",
+        "Aug 2025",
+        datetime(2025, 8, 23),
+        (
+            "Built a C++/Linux system to scrape, archive, process, and visualize the entire wplace.live map with tiled storage, VIPS lower-zoom generation, and full-world jobs.",
+        ),
+    ),
+    PortfolioProject(
         "react-native-skia-yoga",
         "React Native Skia Yoga",
         "Creator - React Native rendering prototype",
+        "Jul 2025",
+        datetime(2025, 7, 30),
         (
             "Developed a C++/TypeScript library combining Yoga layout with React Native Skia for declarative, interactive UI rendering.",
             "Built the JSX intrinsic-node surface and example integration for complex layouts, while clearly documenting the project as an early-stage prototype.",
         ),
     ),
-    CuratedProject(
+    PortfolioProject(
         "holistische",
         "Holistische",
         "Founder - AI-assisted news platform",
+        "Jun 2025",
+        datetime(2025, 6, 5),
         (
-            "Built a private AI-assisted news aggregation product covering German and international reporting.",
+            "Built an AI-assisted news aggregation product covering German and international reporting.",
             "Designed the product and publishing workflow around source-based aggregation, structured editorial review, and clear positioning.",
         ),
+        url_override="https://holistische.de",
+        show_private_marker=False,
     ),
-    CuratedProject(
+    PortfolioProject(
+        "spotify-drm-report",
+        "Spotify DRM Report",
+        "Independent Technical Research",
+        "May 2025",
+        datetime(2025, 5, 20),
+        (
+            "Published a proof-of-concept report on a reported missing-DRM-enforcement issue in Spotify's Accesspoint API.",
+        ),
+    ),
+    PortfolioProject(
+        "bundestagswahl2025",
+        "Bundestagswahl 2025",
+        "Independent Data Analysis",
+        "Feb 2025",
+        datetime(2025, 2, 26),
+        (
+            "Built and published a TypeScript/Bun data pipeline and interactive map covering all 299 German federal-election constituencies; documented the methodology in a public article.",
+        ),
+    ),
+    PortfolioProject(
+        "react-native-skia-list",
+        "React Native Skia List",
+        "Creator",
+        "Oct 2024",
+        datetime(2024, 10, 15),
+        (
+            "Built a Skia/C++ virtualized list that rendered 1,000 items up to 10x faster than existing React Native list-rendering solutions with about 70% fewer dropped frames; 240+ GitHub stars.",
+        ),
+    ),
+    PortfolioProject(
+        "fingerprinting",
+        "Browser Fingerprinting Technical Analysis",
+        "Author",
+        "May 2024",
+        datetime(2024, 5, 8),
+        (
+            "Authored a FingerprintJS-based technical analysis; developed a custom fingerprinting library and dataset to evaluate identification methods, limitations, and countermeasures.",
+        ),
+    ),
+    PortfolioProject(
         "Baileys",
-        "Baileys Mobile Protocol Stack",
+        "Baileys & WhatsApp Messaging Stack",
         "Creator - messaging protocol infrastructure",
+        "Apr 2023",
+        datetime(2023, 4, 20),
         (
-            "Extended a private WhatsApp-compatible messaging stack with native-mobile API support, TCP transport, registration flows, media mappings, CAPTCHA handling, and device/session events.",
-            "Worked across protocol integration, asynchronous connection state, and mobile-specific behavior in a TypeScript runtime.",
+            "Extended a private WhatsApp-compatible messaging stack with native-mobile API support, TCP transport, registration flows, media mappings, and device/session events.",
+            "Built the associated operations backend and dashboard with account authentication, APNs integration, proxy handling, API-key management, BullMQ jobs, structured logging, and performance-focused data flows.",
         ),
     ),
-    CuratedProject(
-        "whatsapp",
-        "WhatsApp Operations Backend",
-        "Creator - private messaging backend",
-        (
-            "Built a private WhatsApp operations backend and dashboard with account authentication, APNs integration, proxy handling, API-key management, and account-event processing.",
-            "Added BullMQ-backed jobs, structured logging, lazy-loaded data tables, and performance-focused API flows for a multi-account service.",
-        ),
-    ),
-    CuratedProject(
+    PortfolioProject(
         "missing-native-js-syntax",
         "Missing Native JS Syntax",
         "Creator and maintainer - TypeScript tooling",
+        "Jul 2023",
+        datetime(2023, 7, 28),
         (
             "Created a TypeScript transformer and Babel plugin that adds missing JavaScript syntax patterns to existing codebases.",
             "Packaged the tool for npm with documentation, examples, and automated CI, demonstrating compiler-tooling and developer-experience work.",
         ),
     ),
-    CuratedProject(
+    PortfolioProject(
         "PokemonGame",
         "Pokémon-inspired 2D Game",
         "Creator - Java game development",
+        "Feb 2021",
+        datetime(2021, 2, 24),
         (
             "Built a complete 2D game in Java with the LITIengine framework, including game mechanics, assets, and a distributable release.",
             "Applied object-oriented design and game-engine development in an independently shipped personal project.",
         ),
     ),
-    CuratedProject(
-        "spotify-playback-sdk-node",
-        "Spotify Playback SDK for Node.js",
-        "Creator - developer library",
+    PortfolioProject(
+        "puppeteer-stream",
+        "Puppeteer Stream",
+        "Creator & Maintainer",
+        "Dec 2020",
+        datetime(2020, 12, 22),
         (
-            "Created a Node.js wrapper around Spotify's Web Playback SDK to make browser playback capabilities accessible from JavaScript applications.",
-            "Published the library as a reusable developer integration and maintained supporting documentation and example environments.",
+            "Created and maintains a TypeScript browser audio/video capture library for Puppeteer with 222k+ npm downloads in the 12 months ending August 2026, 459+ GitHub stars, and 131 forks.",
         ),
     ),
-    CuratedProject(
+    PortfolioProject(
         "carcassonne-ai",
         "Carcassonne AI",
         "Creator - AI and game-systems project",
+        "Nov 2020",
+        datetime(2020, 11, 16),
         (
             "Designed and implemented an AI for the board game Carcassonne as a school seminar project, supported by a technical paper and playable implementation.",
             "Explored search and decision-making techniques alongside Python game logic and a visual game interface.",
         ),
     ),
-    CuratedProject(
+    PortfolioProject(
+        "discord-bot-client",
+        "Discord Bot Client",
+        "Creator",
+        "May 2020",
+        datetime(2020, 5, 15),
+        (
+            "Created a Discord client fork with bot-login support, exposing a bot-oriented client experience that the official application did not provide.",
+            "Built and maintained a widely adopted open-source project with 695 GitHub stars, 390 forks, and 908,716 downloads across its ten published installers.",
+        ),
+    ),
+    PortfolioProject(
         "gyki-app",
         "GyKi Mobile App",
         "Creator - iOS school companion",
+        "2018",
+        datetime(2018, 1, 1),
         (
             "Built a native iOS app for the Gymnasium Kirchheim community, giving students mobile access to timetables and substitution plans.",
-            "Developed the app as part of a broader school-product effort that later included collaboration and communication tools.",
         ),
-        date="2018; repository archived Apr 2022",
-    ),
-    CuratedProject(
-        "minecraft-server-admin-panel",
-        "Minecraft Server Admin Panel",
-        "Creator - self-hosted infrastructure tooling",
-        (
-            "Built a web dashboard for creating and administering self-hosted Minecraft servers, covering operational workflows and server configuration.",
-            "Established an early foundation in Linux-hosted services, PHP, SQL, and browser-based administration interfaces.",
-        ),
-        date="2017; repository created Jun 2021",
+        show_private_marker=False,
     ),
 )
 
 
-def curated_project_entries() -> list[KeepTogether]:
-    return [
-        project_entry(
-            github_project_title(project.repository, project.role, project.title),
-            project.date or github_created_month(project.repository),
-            list(project.summaries),
-            space_after=1.6,
+def portfolio_project_title(project: PortfolioProject) -> str:
+    details = github_project(project.repository)
+    if project.url_override:
+        return f"{link(project.title, project.url_override)} | {escape(project.role)}"
+    if details.get("isPrivate"):
+        marker = " (private)" if project.show_private_marker else ""
+        return f"{escape(project.title)}{marker} | {escape(project.role)}"
+    return f"{link(project.title, details['url'])} | {escape(project.role)}"
+
+
+def portfolio_project_url(project: PortfolioProject) -> str | None:
+    """Return the recruiter-facing URL while keeping private projects private."""
+    if project.url_override:
+        return project.url_override
+    details = github_project(project.repository)
+    return None if details.get("isPrivate") else str(details["url"])
+
+
+def portfolio_project_entries() -> list:
+    """Lay out the chronological portfolio without leaving a near-empty final page."""
+    entries: list = []
+    for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True):
+        entries.append(
+            project_entry(
+                portfolio_project_title(project),
+                project.date,
+                list(project.summaries),
+                space_after=1.6,
+            )
         )
-        for project in CURATED_PROJECTS
-    ]
+        if project.repository == "PokemonGame":
+            entries.extend([PageBreak(), section("Projects (continued)")])
+    return entries
 
 
 def build_story() -> list:
@@ -517,7 +594,7 @@ def build_story() -> list:
         ),
         entry(
             f"Founder &amp; Engineer | {link('Respond', 'https://github.com/respondchat')}",
-            "Jan 2022-present",
+            "Jan 2022-Dec 2024",
             [
                 "Founded Respond, a multi-platform messaging app uniting WhatsApp, Telegram, "
                 "Discord, and Fosscord/Spacebar in one client experience; built supporting "
@@ -526,71 +603,7 @@ def build_story() -> list:
             space_after=1.0,
         ),
         section("Projects"),
-        project_entry(
-            f"{link('Puppeteer Stream', 'https://github.com/samuelscheit/puppeteer-stream')} | Creator &amp; Maintainer",
-            "Dec 2020-present",
-            [
-                "Created and maintains a TypeScript browser audio/video capture library for "
-                f"Puppeteer with {link('222k+ npm downloads', 'https://api.npmjs.org/downloads/point/2025-08-25:2026-08-24/puppeteer-stream')} "
-                "in the 12 months ending August 2026, <b>459+ GitHub stars and 131 forks</b>.",
-            ],
-            space_after=1.0,
-        ),
-        project_entry(
-            f"{link('React Native Skia List', 'https://github.com/samuelscheit/react-native-skia-list')} | Creator",
-            "Oct 2024-present",
-            [
-                "Built a Skia/C++ virtualized list that rendered 1,000 items <b>up to 10x faster</b> "
-                "than existing react-native list rendering solutions with "
-                f"{link('about 70% fewer dropped frames', 'https://samuelscheit.com/blog/2024/react-native-skia-list')}"
-                "; 240+ GitHub stars.",
-            ],
-            space_after=1.0,
-        ),
-        project_entry(
-            f"{link('Phishing Support', 'https://phishing.support')} | Creator",
-            "Jan 2026-present",
-            [
-                "Built an open-source tool for automated analysis, reporting, and tracking of phishing emails and malicious websites, including indicator extraction, automated checks, and abuse/takedown workflows.",
-            ],
-        ),
-        project_entry(
-            f"{link('Bundestagswahl 2025', 'https://github.com/samuelscheit/bundestagswahl2025')} | Independent Data Analysis",
-            "Feb 2025",
-            [
-                "Built and published a TypeScript/Bun data pipeline and interactive map covering all 299 German federal-election constituencies; documented the methodology in a public article.",
-            ],
-        ),
-        project_entry(
-            f"{link('Browser Fingerprinting Technical Analysis', 'https://github.com/samuelscheit/fingerprinting')} | Author",
-            "May 2024-present",
-            [
-                "Authored a FingerprintJS-based technical analysis; developed a custom fingerprinting library and dataset to evaluate identification methods, limitations, and countermeasures.",
-            ],
-        ),
-        project_entry(
-            f"{link('WPlace World Archive', 'https://github.com/samuelscheit/wplace-archive')} | Creator",
-            "Aug 2025-present",
-            [
-                "Built a C++/Linux system to scrape, archive, process, and visualize the entire wplace.live map with tiled storage, VIPS lower-zoom generation, and full-world jobs.",
-            ],
-        ),
-        project_entry(
-            f"{link('Spotify DRM Report', 'https://github.com/samuelscheit/spotify-drm-report')} | Independent Technical Research",
-            "May 2025 (report 2023)",
-            [
-                "Published a proof-of-concept report on a reported missing-DRM-enforcement issue in Spotify's Accesspoint API.",
-            ],
-        ),
-        project_entry(
-            f"{link('Discord Bot Client', 'https://github.com/samuelscheit/discord-bot-client')} | Creator",
-            "May 2020",
-            [
-                "Created a Discord client fork with bot-login support, exposing a bot-oriented client experience that the official application did not provide.",
-                "Built and maintained a widely adopted open-source project with <b>695 GitHub stars, 390 forks, and 908,716 GitHub release-asset downloads</b> across its ten published installers.",
-            ],
-        ),
-        *curated_project_entries(),
+        *portfolio_project_entries(),
         section("Technical Skills"),
         paragraph(
             "<b>Primary:</b> TypeScript, JavaScript, React, Next.js, React Native, Node.js/Bun<br/>"
@@ -657,7 +670,7 @@ def verify_pdf(path: Path) -> None:
         "Feb 2025",
         "Technical University of Munich",
     ]
-    required_text.extend(project.title for project in CURATED_PROJECTS)
+    required_text.extend(project.title for project in PORTFOLIO_PROJECTS)
     missing_text = [item for item in required_text if item not in flat_text]
     if missing_text:
         raise RuntimeError(f"Missing required text in generated PDF: {missing_text}")
@@ -679,10 +692,31 @@ def verify_pdf(path: Path) -> None:
         "Curated from my own repository history",
         "More repository history",
         "commits.json",
+        "Spotify Playback SDK for Node.js",
+        "WhatsApp Operations Backend",
+        "Minecraft Server Admin Panel",
+        "cccb-servicepoint-browser",
+        "jura",
+        "gpia",
+        "GykiSpace",
+        "Lambert-server",
+        "Lambert-orm",
+        "Database-Browser",
+        "CAPTCHA",
     ]
     unexpected_text = [item for item in removed_text if item in flat_text]
     if unexpected_text:
         raise RuntimeError(f"Removed content is still present in the recruiter-facing CV: {unexpected_text}")
+
+    projects_start = flat_text.index("PROJECTS")
+    skills_start = flat_text.index("TECHNICAL SKILLS")
+    projects_text = flat_text[projects_start:skills_start]
+    if "present" in projects_text:
+        raise RuntimeError("Projects must use completion dates rather than open-ended date ranges")
+    ordered_titles = [project.title for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True)]
+    positions = [projects_text.index(title) for title in ordered_titles]
+    if positions != sorted(positions):
+        raise RuntimeError("Projects are not ordered chronologically, newest first")
 
     uris = set()
     for page in reader.pages:
@@ -706,9 +740,9 @@ def verify_pdf(path: Path) -> None:
         "https://github.com/samuelscheit/spotify-drm-report",
     }
     required_uris.update(
-        details["url"]
-        for project in CURATED_PROJECTS
-        if not (details := github_project(project.repository)).get("isPrivate")
+        url
+        for project in PORTFOLIO_PROJECTS
+        if (url := portfolio_project_url(project)) is not None
     )
     missing_uris = sorted(required_uris - uris)
     if missing_uris:
