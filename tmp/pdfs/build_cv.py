@@ -9,6 +9,8 @@ whenever the source material provides it; client engagements whose notes only
 contain a year keep that year rather than inventing a month.
 """
 
+from datetime import datetime
+import json
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -147,16 +149,6 @@ def make_styles() -> dict[str, ParagraphStyle]:
             textColor=INK,
             spaceAfter=0,
         ),
-        "callout": ParagraphStyle(
-            "Callout",
-            parent=base["BodyText"],
-            fontName="Helvetica-Bold",
-            fontSize=9.5,
-            leading=11.4,
-            textColor=ACCENT,
-            alignment=TA_CENTER,
-            spaceAfter=0,
-        ),
     }
 
 
@@ -245,13 +237,6 @@ def entry(
     return KeepTogether(content)
 
 
-def project_callout() -> Paragraph:
-    return paragraph(
-        f"More repository history: {link('samuelscheit.com/github', 'https://samuelscheit.com/github')}",
-        "callout",
-    )
-
-
 def project_entry(
     title: str,
     date: str,
@@ -262,6 +247,196 @@ def project_entry(
 ) -> KeepTogether:
     """Create a project entry with the same layout as an experience entry."""
     return entry(title, date, items, subtitle=subtitle, space_after=space_after)
+
+
+_GITHUB_DATA: dict | None = None
+
+
+def github_repositories() -> dict:
+    """Load the downloaded GitHub metadata once for curated project dates."""
+    global _GITHUB_DATA
+    if _GITHUB_DATA is not None:
+        return _GITHUB_DATA
+
+    source = ROOT / "github/commits.json"
+    try:
+        _GITHUB_DATA = json.loads(source.read_text(encoding="utf-8"))["repositories"]
+    except FileNotFoundError as error:
+        raise RuntimeError(f"GitHub project source is missing: {source}") from error
+    except (json.JSONDecodeError, KeyError) as error:
+        raise RuntimeError(f"GitHub project source is invalid: {source}") from error
+    return _GITHUB_DATA
+
+
+def github_project(name: str) -> dict:
+    """Return a user-created, non-fork repository or fail loudly.
+
+    ``commits.json`` contains both repositories created by Samuel and places
+    where he contributed.  This guard prevents the CV from accidentally
+    presenting upstream contributions as projects he created.
+    """
+    repositories = github_repositories()
+    repository = next(
+        (
+            value
+            for value in repositories.values()
+            if (value.get("details") or {}).get("name", "").casefold() == name.casefold()
+            and ((value.get("details") or {}).get("owner") or {}).get("login", "").casefold() == "samuelscheit"
+        ),
+        None,
+    )
+    if repository is None:
+        raise RuntimeError(f"Repository {name!r} is not present in commits.json as Samuel's repository")
+    details = repository["details"]
+    if details.get("isFork"):
+        raise RuntimeError(f"Repository {name!r} is a fork and cannot be presented as a created project")
+    return details
+
+
+def github_created_month(name: str) -> str:
+    created_at = github_project(name).get("createdAt")
+    if not created_at:
+        raise RuntimeError(f"Repository {name!r} has no creation date in commits.json")
+    try:
+        return datetime.fromisoformat(created_at.replace("Z", "+00:00")).strftime("%b %Y")
+    except ValueError as error:
+        raise RuntimeError(f"Invalid creation date for repository {name!r}: {created_at!r}") from error
+
+
+def github_project_title(name: str, role: str) -> str:
+    details = github_project(name)
+    # Private repositories are deliberately not linked; their summaries still
+    # communicate the work without exposing an inaccessible destination.
+    if details.get("isPrivate"):
+        return f"{escape(name)} (private) | {escape(role)}"
+    return f"{link(name, details['url'])} | {escape(role)}"
+
+
+CURATED_PROJECTS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    (
+        "npm-malicious-check",
+        "Creator - supply-chain security tooling",
+        (
+            "Built a Python triage utility that downloads npm malware advisories, normalizes them to CSV, and scans local npm, Bun, and Yarn caches for package/version matches.",
+            "Designed the workflow to give developers and incident responders a fast, auditable first check after a supply-chain incident.",
+        ),
+    ),
+    (
+        "react-native-skia-yoga",
+        "Creator - React Native rendering prototype",
+        (
+            "Developed a C++/TypeScript library combining Yoga layout with React Native Skia for declarative, interactive UI rendering.",
+            "Built the JSX intrinsic-node surface and example integration for complex layouts, while documenting the project as an early-stage prototype rather than production software.",
+        ),
+    ),
+    (
+        "holistische",
+        "Founder - AI-assisted news platform",
+        (
+            "Built a private AI-assisted news aggregation product covering German and international reporting.",
+            "Designed the product and publishing workflow around source-based aggregation, structured editorial review, and clear positioning.",
+        ),
+    ),
+    (
+        "cccb-servicepoint-browser",
+        "Creator - browser media integration",
+        (
+            "Built a TypeScript/Bun service that sends text, images, and live Puppeteer browser video to the CCC Berlin Service Point display.",
+            "Connected browser automation and media transport into a small operational display system with explicit commands for each content type.",
+        ),
+    ),
+    (
+        "missing-native-js-syntax",
+        "Creator and maintainer - TypeScript tooling",
+        (
+            "Created a TypeScript transformer and Babel plugin that adds missing JavaScript syntax patterns to existing codebases.",
+            "Packaged the tool for npm with documentation, examples, and automated CI, demonstrating compiler-tooling and developer-experience work.",
+        ),
+    ),
+    (
+        "gpia",
+        "Creator - Android integrity research prototype",
+        (
+            "Investigated Google Play Integrity, SafetyNet, and DroidGuard request flows through a focused protobuf client prototype.",
+            "Applied protocol analysis and binary/API research to document how Android anti-abuse services can be queried from native tooling.",
+        ),
+    ),
+    (
+        "whatsapp",
+        "Creator - private messaging backend",
+        (
+            "Built a private WhatsApp operations backend and dashboard with account authentication, APNs integration, proxy handling, API-key management, and account-event processing.",
+            "Added BullMQ-backed jobs, structured logging, lazy-loaded data tables, and performance-focused API flows for a multi-account service.",
+        ),
+    ),
+    (
+        "Baileys",
+        "Creator - messaging protocol infrastructure",
+        (
+            "Extended a private WhatsApp-compatible messaging stack with native-mobile API support, TCP transport, registration flows, media mappings, CAPTCHA handling, and device/session events.",
+            "Worked across protocol integration, asynchronous connection state, and mobile-specific behavior in a TypeScript runtime.",
+        ),
+    ),
+    (
+        "jura",
+        "Creator - legal text analysis prototype",
+        (
+            "Developed a private legal-text analysis prototype with a parser for German statutes and references, MongoDB-backed data models, and a Next.js interface.",
+            "Added AI-assisted checks for legal content and iterated on grammar, extraction, and judgment-analysis workflows.",
+        ),
+    ),
+    (
+        "GykiSpace",
+        "Creator - school collaboration platform",
+        (
+            "Built a real-time school collaboration and chat project for the GyKi community, extending the earlier school-app work into a shared communication surface.",
+            "Used the project to explore product design, messaging flows, and self-hosted application development.",
+        ),
+    ),
+    (
+        "Lambert-server",
+        "Creator - Node.js server framework",
+        (
+            "Created an Express-based route handler with convention-driven route registration, JSON error handling, and schema-style request validation.",
+            "Published a reusable npm-oriented server foundation designed to reduce boilerplate across small Node.js services.",
+        ),
+    ),
+    (
+        "Lambert-orm",
+        "Creator - database abstraction library",
+        (
+            "Designed a database abstraction layer that exposes path-based data access while allowing the underlying database engine to change independently.",
+            "Implemented a MongoDB adapter and a proxy-style API that fetches only the data needed for each operation.",
+        ),
+    ),
+    (
+        "Database-Browser",
+        "Creator - web administration tool",
+        (
+            "Built a browser-based PHP/JavaScript/MySQL administration tool for inspecting and editing database contents.",
+            "Delivered an early end-to-end application spanning the LAMP stack, server deployment, tabular data views, and write operations.",
+        ),
+    ),
+)
+
+
+def curated_project_entries() -> list[KeepTogether]:
+    entries: list[KeepTogether] = []
+    projects = sorted(
+        CURATED_PROJECTS,
+        key=lambda item: datetime.strptime(github_created_month(item[0]), "%b %Y"),
+        reverse=True,
+    )
+    for repository, role, summary in projects:
+        entries.append(
+            project_entry(
+                github_project_title(repository, role),
+                github_created_month(repository),
+                list(summary),
+                space_after=1.6,
+            )
+        )
+    return entries
 
 
 def build_story() -> list:
@@ -427,8 +602,13 @@ def build_story() -> list:
             f"{link('Feb 2025', 'https://samuelscheit.com/blog/2025/bundestagswahl')} - Fehlende Stimmen bei der Bundestagswahl 2025?",
             "compact",
         ),
-        Spacer(1, 1.0),
-        project_callout(),
+        section("Selected Additional Projects"),
+        paragraph(
+            "Curated from my own repository history and limited to projects that demonstrate meaningful engineering work. "
+            "Dates use each repository's creation month; summaries focus on recruiter-relevant engineering scope.",
+            "subtitle",
+        ),
+        *curated_project_entries(),
         section("Technical Skills"),
         paragraph(
             "<b>Primary:</b> TypeScript, JavaScript, React, Next.js, React Native, Node.js/Bun<br/>"
@@ -494,6 +674,7 @@ def verify_pdf(path: Path) -> None:
         "Feb 2025",
         "Technical University of Munich",
     ]
+    required_text.extend(repository for repository, _role, _summary in CURATED_PROJECTS)
     missing_text = [item for item in required_text if item not in flat_text]
     if missing_text:
         raise RuntimeError(f"Missing required text in generated PDF: {missing_text}")
@@ -506,6 +687,8 @@ def verify_pdf(path: Path) -> None:
         raise RuntimeError("MyroDex must not be listed under freelance experience")
     if flat_text.find("MyroDex", founder_start) == -1:
         raise RuntimeError("MyroDex must be listed under founder experience")
+    if "More repository history" in flat_text or "commits.json" in flat_text:
+        raise RuntimeError("Internal source references must not appear in the recruiter-facing CV")
 
     uris = set()
     for page in reader.pages:
@@ -516,7 +699,6 @@ def verify_pdf(path: Path) -> None:
                 uris.add(str(action["/URI"]))
     required_uris = {
         "mailto:contact@samuelscheit.com",
-        "https://samuelscheit.com/github",
         "https://github.com/samuelscheit",
         "https://spacebar.chat",
         "https://github.com/respondchat",
@@ -526,7 +708,14 @@ def verify_pdf(path: Path) -> None:
         "https://github.com/samuelscheit/discord-bot-client",
         "https://github.com/samuelscheit/puppeteer-stream",
         "https://github.com/samuelscheit/react-native-skia-list",
+        "https://github.com/samuelscheit/react-native-skia-yoga",
         "https://phishing.support",
+        "https://github.com/samuelscheit/cccb-servicepoint-browser",
+        "https://github.com/samuelscheit/missing-native-js-syntax",
+        "https://github.com/samuelscheit/GykiSpace",
+        "https://github.com/samuelscheit/Lambert-server",
+        "https://github.com/samuelscheit/Lambert-orm",
+        "https://github.com/samuelscheit/Database-Browser",
         "https://github.com/samuelscheit/bundestagswahl2025",
         "https://github.com/samuelscheit/fingerprinting",
         "https://github.com/samuelscheit/wplace-archive",
