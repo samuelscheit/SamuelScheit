@@ -1,4 +1,13 @@
-"""Build Samuel Scheit's recruiter-focused, one-page CV."""
+"""Build Samuel Scheit's complete, recruiter-focused CV.
+
+The website CV (``CV.md``) is intentionally detailed.  The old PDF builder
+selected only two open-source projects and replaced the rest with a generic
+``50+`` link, which made the PDF materially less useful than the source CV.
+Project data now lives in this module as explicit entries so every project that
+is named in the CV is visible in the generated PDF.  Dates use month precision
+whenever the source material provides it; client engagements whose notes only
+contain a year keep that year rather than inventing a month.
+"""
 
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -169,7 +178,7 @@ def normalize(text: str) -> str:
 def link(label: str, url: str) -> str:
     return (
         f'<link href="{escape(url)}">'
-        f'<u><font color="{ACCENT_HEX}">{escape(label)}</font></u>'
+        f'<font color="{ACCENT_HEX}">{escape(label)}</font>'
         "</link>"
     )
 
@@ -195,7 +204,9 @@ def section(title: str) -> KeepTogether:
 
 
 def heading(title: str, date: str) -> Table:
-    date_width = 31 * mm
+    # Keep the date column wide enough for month-qualified ranges such as
+    # ``2023 report; May 2025 publication`` without squeezing project names.
+    date_width = 43 * mm
     table = Table(
         [[paragraph(title, "entry_title"), paragraph(escape(date), "date")]],
         colWidths=[CONTENT_WIDTH - date_width, date_width],
@@ -236,10 +247,21 @@ def entry(
 
 def project_callout() -> Paragraph:
     return paragraph(
-        "<b>Additional projects and open-source contributions (50+):</b> "
-        f"{link('samuelscheit.com/github', 'https://samuelscheit.com/github')}",
+        f"More repository history: {link('samuelscheit.com/github', 'https://samuelscheit.com/github')}",
         "callout",
     )
+
+
+def project_entry(
+    title: str,
+    date: str,
+    items: list[str],
+    *,
+    subtitle: str | None = None,
+    space_after: float = 2.0,
+) -> KeepTogether:
+    """Create a project entry with the same layout as an experience entry."""
+    return entry(title, date, items, subtitle=subtitle, space_after=space_after)
 
 
 def build_story() -> list:
@@ -262,72 +284,148 @@ def build_story() -> list:
         paragraph(
             "Software engineer with commercial delivery experience across high-performance "
             "mobile applications, WebGL video rendering, full-stack SaaS, and real-time systems. "
-            "Delivered product engineering for Exodus, PHONT, and MyroDex; founded Spacebar "
-            "(6.7k+ GitHub stars) and built developer tooling with 222k+ npm downloads in 12 months.",
+            "Delivered product engineering for PHONT, Exodus, and MyroDex; founded Spacebar "
+            "(6.7k+ GitHub stars) and built developer tooling with 222k+ npm downloads in 12 months. "
+            "The project history below includes every project named in the full CV.",
             "summary",
         ),
-        section("Experience"),
+        section("Experience & Ventures"),
         entry(
             "Freelance Software Engineer",
             "2025-2026",
             [
-                f"<b>{link('PHONT', 'https://phont.ai')} (2025):</b> Re-engineered a WebGL/FFmpeg "
+                f"<b>{link('PHONT', 'https://phont.ai')} (2025; month not recorded):</b> Re-engineered a WebGL/FFmpeg "
                 "video-export pipeline from real-time capture to deterministic frame-by-frame "
                 "rendering, improving export speed by up to <b>50x in project benchmarks</b>.",
-                f"<b>{link('Exodus', 'https://www.exodus.com')} (2025):</b> Delivered "
+                f"<b>{link('Exodus', 'https://www.exodus.com')} (2025; month not recorded):</b> Delivered "
                 "performance-sensitive gestures, animations, and product flows across Exodus "
                 "Mobile and Grateful using React Native, Reanimated, Skia, and native iOS/Android "
-                "integration, tuning frame stability and reduced-motion behavior.",
+                "integration.",
             ],
             subtitle="Selected client engagements",
         ),
         entry(
-            "Founder &amp; Engineer",
-            "2021-present",
+            f"Founder &amp; Engineer | {link('Spacebar Chat', 'https://spacebar.chat')}",
+            "Jan 2021-present",
             [
-                f"<b>{link('Myrodex', 'https://myrodex.gg')} (2026):</b> Founded and built "
+                f"<b>{link('MyroDex', 'https://myrodex.gg')} (2026; month not recorded):</b> Founded and built "
                 "a multi-tenant esports operations SaaS end to end across customer and back-office "
                 "apps, organization RBAC, workflows, Stripe billing, background workers, automated "
                 "tests, and a production deployment workflow.",
-                f"<b>{link('Spacebar Chat', 'https://spacebar.chat')} (2021):</b> Founded "
-                "a self-hostable, Discord-compatible chat, voice, and video "
+                "Founded a self-hostable, Discord-compatible chat, voice, and video "
                 "platform whose flagship repository reached <b>6.7k+ stars and 220+ forks</b>; "
                 "the ecosystem spans HTTP APIs, WebSocket/WebRTC, CDN/media delivery, data "
                 "models, administration tooling, and clients.",
             ],
-            space_after=0.5,
+            space_after=1.0,
         ),
-        section("Selected Open-Source Impact"),
         entry(
+            f"Founder &amp; Engineer | {link('Respond', 'https://github.com/respondchat')}",
+            "Jan 2022-present",
+            [
+                "Founded a multi-platform messaging initiative uniting WhatsApp, Telegram, "
+                "Discord, and Fosscord/Spacebar in one client experience; built supporting "
+                "React Native, Rust, and JSI runtime infrastructure.",
+            ],
+            space_after=1.0,
+        ),
+        entry(
+            f"Open-Source Contributor / Maintainer | {link('Trant Labs', 'https://github.com/trantlabs')}",
+            "Jan 2021-Nov 2024",
+            [
+                f"Contributed features, releases, documentation, and CI/CD to {link('missing-native-js-functions', 'https://github.com/trantlabs/missing-native-js-functions')}, "
+                "a zero-dependency JavaScript utility library.",
+            ],
+            space_after=1.0,
+        ),
+        entry(
+            "Independent Software Developer",
+            "From Jan 2018",
+            [
+                f"Built the {link('GyKi', 'https://github.com/samuelscheit/gyki-app')} school app for timetables, substitution plans, and appointments; "
+                f"created the historical {link('Discord Bot Client', 'https://github.com/samuelscheit/discord-bot-client')} (695 stars / 390 forks) "
+                "and Discord bots for commissioned work.",
+                "Built an early database-backed server-management application and developed a foundation in C, Linux, HTML/CSS, PHP, and SQL.",
+            ],
+            space_after=1.0,
+        ),
+        section("Projects"),
+        project_entry(
             f"{link('Puppeteer Stream', 'https://github.com/samuelscheit/puppeteer-stream')} | Creator &amp; Maintainer",
-            "2020-present",
+            "Dec 2020-present",
             [
                 "Created and maintains a TypeScript browser audio/video capture library for "
                 f"Puppeteer with {link('222k+ npm downloads', 'https://api.npmjs.org/downloads/point/2025-08-25:2026-08-24/puppeteer-stream')} "
                 "in the 12 months ending August 2026, <b>459+ GitHub stars and 131 forks</b>.",
             ],
-            space_after=0.7,
+            space_after=1.0,
         ),
-        entry(
+        project_entry(
             f"{link('React Native Skia List', 'https://github.com/samuelscheit/react-native-skia-list')} | Creator",
-            "2024-present",
+            "Oct 2024-present",
             [
                 "Built a Skia/C++ virtualized list that rendered 1,000 items <b>up to 10x faster</b> "
-                "than FlashList/FlatList with <b>about 70% fewer dropped frames</b> in a "
-                f"{link('published iPhone 13 Pro Max benchmark', 'https://samuelscheit.com/blog/2024/react-native-skia-list')} "
-                "on React Native 0.75 New Architecture; 240+ GitHub stars.",
+                "than existing react-native list rendering solutions with "
+                f"{link('about 70% fewer dropped frames', 'https://samuelscheit.com/blog/2024/react-native-skia-list')}"
+                "; 240+ GitHub stars.",
             ],
-            space_after=0.7,
+            space_after=1.0,
         ),
-        entry(
-            "Upstream Mobile &amp; Native Contributions",
-            "",
+        project_entry(
+            f"{link('Phishing Support', 'https://phishing.support')} | Creator",
+            "Jan 2026-present",
             [
-                f"Landed {link('React Native Skia iOS ProMotion 120 Hz', 'https://github.com/Shopify/react-native-skia/pull/2690')} "
-                f"support, originated its {link('macOS Catalyst approach', 'https://github.com/Shopify/react-native-skia/pull/3296')}, "
-                f"and added {link('iOS support to jsi-rs', 'https://github.com/laptou/jsi-rs/pull/3')} for Rust/JSI interoperability.",
+                "Built an open-source tool for automated analysis, reporting, and tracking of phishing emails and malicious websites, including indicator extraction, automated checks, and abuse/takedown workflows.",
             ],
-            space_after=0.8,
+        ),
+        project_entry(
+            f"{link('Bundestagswahl 2025', 'https://github.com/samuelscheit/bundestagswahl2025')} | Independent Data Analysis",
+            "Feb 2025",
+            [
+                "Built and published a TypeScript/Bun data pipeline and interactive map covering all 299 German federal-election constituencies; documented the methodology in a public article.",
+            ],
+        ),
+        project_entry(
+            f"{link('Browser Fingerprinting Technical Analysis', 'https://github.com/samuelscheit/fingerprinting')} | Co-author",
+            "May 2024-present",
+            [
+                "Co-authored a FingerprintJS-based technical analysis; developed a custom fingerprinting library and dataset to evaluate identification methods, limitations, and countermeasures.",
+            ],
+        ),
+        project_entry(
+            f"{link('WPlace World Archive', 'https://github.com/samuelscheit/wplace-archive')} | Creator",
+            "Aug 2025-present",
+            [
+                "Built a C++/Linux system to scrape, archive, process, and visualize the entire wplace.live map with tiled storage, VIPS lower-zoom generation, and full-world jobs.",
+            ],
+        ),
+        project_entry(
+            f"{link('Spotify DRM Report', 'https://github.com/samuelscheit/spotify-drm-report')} | Independent Technical Research",
+            "May 2025 (report 2023)",
+            [
+                "Published a proof-of-concept report on a reported missing-DRM-enforcement issue in Spotify's Accesspoint API; no CVE, bounty, or vendor outcome is claimed.",
+            ],
+        ),
+        project_entry(
+            f"{link('Team Checkmate / Hackatum 2024', 'https://github.com/samuelscheit/hackatum-2024')} | Systems Challenge",
+            "Nov 2024",
+            [
+                "Co-built a high-concurrency Go REST backend for Check24's car-rental challenge using SQL optimization, in-memory bitmap filtering, B-trees, and fasthttp.",
+            ],
+        ),
+        project_entry(
+            "Upstream Mobile &amp; Native Contributions",
+            "Sep-Oct 2024",
+            [
+                f"Landed {link('React Native Skia iOS ProMotion 120 Hz', 'https://github.com/Shopify/react-native-skia/pull/2690')} support, originated its {link('macOS Catalyst approach', 'https://github.com/Shopify/react-native-skia/pull/3296')}, and added {link('iOS support to jsi-rs', 'https://github.com/laptou/jsi-rs/pull/3')} for Rust/JSI interoperability.",
+            ],
+        ),
+        section("Technical Writing"),
+        paragraph(
+            f"{link('Jul 2023', 'https://samuelscheit.com/blog/2023/react-native-rust')} - Using Rust in React Native with jsi-rs; "
+            f"{link('Oct 2024', 'https://samuelscheit.com/blog/2024/react-native-skia-list')} - Implementing the fastest list renderer for React Native; "
+            f"{link('Feb 2025', 'https://samuelscheit.com/blog/2025/bundestagswahl')} - Fehlende Stimmen bei der Bundestagswahl 2025?",
+            "compact",
         ),
         Spacer(1, 1.0),
         project_callout(),
@@ -340,7 +438,7 @@ def build_story() -> list:
         ),
         section("Education"),
         paragraph(
-            "<b>Technical University of Munich (TUM)</b> | Informatics studies | 2022-2024",
+            "<b>Technical University of Munich (TUM)</b> | Informatics studies (no degree) | 2022-2024",
             "compact",
         ),
         Spacer(1, 1.2),
@@ -353,49 +451,87 @@ def build_story() -> list:
 
 def verify_pdf(path: Path) -> None:
     reader = PdfReader(path)
-    if len(reader.pages) != 1:
-        raise RuntimeError(f"Expected exactly one page, generated {len(reader.pages)} pages")
+    if len(reader.pages) < 2:
+        raise RuntimeError(
+            "The complete project history should span at least two pages; "
+            f"generated {len(reader.pages)} page"
+        )
 
-    page = reader.pages[0]
-    width = float(page.mediabox.width)
-    height = float(page.mediabox.height)
-    if abs(width - A4[0]) > 0.5 or abs(height - A4[1]) > 0.5:
-        raise RuntimeError(f"Expected A4, generated {width:.1f} x {height:.1f} points")
+    pages_text: list[str] = []
+    for page in reader.pages:
+        width = float(page.mediabox.width)
+        height = float(page.mediabox.height)
+        if abs(width - A4[0]) > 0.5 or abs(height - A4[1]) > 0.5:
+            raise RuntimeError(f"Expected A4, generated {width:.1f} x {height:.1f} points")
+        pages_text.append(page.extract_text() or "")
 
-    text = page.extract_text() or ""
+    text = "\n".join(pages_text)
+    # ReportLab may insert line breaks in long headings while extracting text;
+    # keep a whitespace-normalized copy for content assertions.
+    flat_text = " ".join(text.split())
     required_text = [
         "Samuel Scheit",
         "Freelance Software Engineer",
         "Founder & Engineer",
-        "Myrodex",
+        "MyroDex",
         "Spacebar Chat",
+        "Respond",
+        "Trant Labs",
+        "GyKi",
+        "Discord Bot Client",
         "Puppeteer Stream",
-        "Additional projects and open-source contributions (50+)",
+        "React Native Skia List",
+        "Phishing Support",
+        "Bundestagswahl 2025",
+        "Browser Fingerprinting Technical Analysis",
+        "WPlace World Archive",
+        "Spotify DRM Report",
+        "Team Checkmate / Hackatum 2024",
+        "TECHNICAL WRITING",
+        "Jan 2021",
+        "Dec 2020",
+        "Oct 2024",
+        "Feb 2025",
         "Technical University of Munich",
     ]
-    missing_text = [item for item in required_text if item not in text]
+    missing_text = [item for item in required_text if item not in flat_text]
     if missing_text:
         raise RuntimeError(f"Missing required text in generated PDF: {missing_text}")
 
-    freelance_start = text.index("Freelance Software Engineer")
-    founder_start = text.index("Founder & Engineer")
+    freelance_start = flat_text.index("Freelance Software Engineer")
+    founder_start = flat_text.index("Founder & Engineer")
     if freelance_start >= founder_start:
         raise RuntimeError("Founder experience must follow freelance experience")
-    if "Myrodex" in text[freelance_start:founder_start]:
-        raise RuntimeError("Myrodex must not be listed under freelance experience")
-    if text.find("Myrodex", founder_start) == -1:
-        raise RuntimeError("Myrodex must be listed under founder experience")
+    if "MyroDex" in flat_text[freelance_start:founder_start]:
+        raise RuntimeError("MyroDex must not be listed under freelance experience")
+    if flat_text.find("MyroDex", founder_start) == -1:
+        raise RuntimeError("MyroDex must be listed under founder experience")
 
     uris = set()
-    for annotation_ref in page.get("/Annots", []):
-        annotation = annotation_ref.get_object()
-        action = annotation.get("/A")
-        if action and action.get("/URI"):
-            uris.add(str(action["/URI"]))
+    for page in reader.pages:
+        for annotation_ref in page.get("/Annots", []):
+            annotation = annotation_ref.get_object()
+            action = annotation.get("/A")
+            if action and action.get("/URI"):
+                uris.add(str(action["/URI"]))
     required_uris = {
         "mailto:contact@samuelscheit.com",
         "https://samuelscheit.com/github",
         "https://github.com/samuelscheit",
+        "https://spacebar.chat",
+        "https://github.com/respondchat",
+        "https://github.com/trantlabs",
+        "https://github.com/trantlabs/missing-native-js-functions",
+        "https://github.com/samuelscheit/gyki-app",
+        "https://github.com/samuelscheit/discord-bot-client",
+        "https://github.com/samuelscheit/puppeteer-stream",
+        "https://github.com/samuelscheit/react-native-skia-list",
+        "https://phishing.support",
+        "https://github.com/samuelscheit/bundestagswahl2025",
+        "https://github.com/samuelscheit/fingerprinting",
+        "https://github.com/samuelscheit/wplace-archive",
+        "https://github.com/samuelscheit/spotify-drm-report",
+        "https://github.com/samuelscheit/hackatum-2024",
     }
     missing_uris = sorted(required_uris - uris)
     if missing_uris:
@@ -411,11 +547,22 @@ def build() -> Path:
         rightMargin=RIGHT_MARGIN,
         topMargin=15 * mm,
         bottomMargin=12 * mm,
-        title="Samuel Scheit - One-Page Curriculum Vitae",
+        title="Samuel Scheit - Curriculum Vitae",
         author="Samuel Scheit",
         subject="Software engineering curriculum vitae",
     )
-    document.build(build_story())
+    def draw_footer(canvas, _document) -> None:
+        canvas.saveState()
+        canvas.setStrokeColor(RULE)
+        canvas.setLineWidth(0.4)
+        canvas.line(LEFT_MARGIN, 9 * mm, PAGE_WIDTH - RIGHT_MARGIN, 9 * mm)
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(MUTED)
+        canvas.drawString(LEFT_MARGIN, 5.5 * mm, "Samuel Scheit - Curriculum Vitae")
+        canvas.drawRightString(PAGE_WIDTH - RIGHT_MARGIN, 5.5 * mm, f"Page {canvas.getPageNumber()}")
+        canvas.restoreState()
+
+    document.build(build_story(), onFirstPage=draw_footer, onLaterPages=draw_footer)
     verify_pdf(OUTPUT)
     return OUTPUT
 
