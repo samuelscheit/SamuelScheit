@@ -10,6 +10,7 @@ contain a year keep that year rather than inventing a month.
 """
 
 from datetime import datetime
+from dataclasses import dataclass
 import json
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -286,7 +287,7 @@ def github_project(name: str) -> dict:
         None,
     )
     if repository is None:
-        raise RuntimeError(f"Repository {name!r} is not present in commits.json as Samuel's repository")
+        raise RuntimeError(f"Repository {name!r} is not present in the GitHub project data as Samuel's repository")
     details = repository["details"]
     if details.get("isFork"):
         raise RuntimeError(f"Repository {name!r} is a fork and cannot be presented as a created project")
@@ -296,24 +297,40 @@ def github_project(name: str) -> dict:
 def github_created_month(name: str) -> str:
     created_at = github_project(name).get("createdAt")
     if not created_at:
-        raise RuntimeError(f"Repository {name!r} has no creation date in commits.json")
+        raise RuntimeError(f"Repository {name!r} has no creation date in the GitHub project data")
     try:
         return datetime.fromisoformat(created_at.replace("Z", "+00:00")).strftime("%b %Y")
     except ValueError as error:
         raise RuntimeError(f"Invalid creation date for repository {name!r}: {created_at!r}") from error
 
 
-def github_project_title(name: str, role: str) -> str:
+def github_project_title(name: str, role: str, display_name: str | None = None) -> str:
     details = github_project(name)
+    label = display_name or name
     # Private repositories are deliberately not linked; their summaries still
     # communicate the work without exposing an inaccessible destination.
     if details.get("isPrivate"):
-        return f"{escape(name)} (private) | {escape(role)}"
-    return f"{link(name, details['url'])} | {escape(role)}"
+        return f"{escape(label)} (private) | {escape(role)}"
+    return f"{link(label, details['url'])} | {escape(role)}"
 
 
-CURATED_PROJECTS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
-    (
+@dataclass(frozen=True)
+class CuratedProject:
+    """A recruiter-relevant project validated against the local GitHub export."""
+
+    repository: str
+    title: str
+    role: str
+    summaries: tuple[str, ...]
+    date: str | None = None
+
+
+# This deliberately represents a curated portfolio, not a raw GitHub dump.
+# Every entry is validated as a repository owned by Samuel Scheit and not a
+# fork; private entries remain unlinked in the rendered CV.
+CURATED_PROJECTS: tuple[CuratedProject, ...] = (
+    CuratedProject(
+        "npm-malicious-check",
         "npm-malicious-check",
         "Creator - supply-chain security tooling",
         (
@@ -321,122 +338,120 @@ CURATED_PROJECTS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "Designed the workflow to give developers and incident responders a fast, auditable first check after a supply-chain incident.",
         ),
     ),
-    (
+    CuratedProject(
+        "prediction_arbitrage",
+        "Prediction Market Data Platform",
+        "Creator - real-time market-data platform",
+        (
+            "Built a private real-time prediction-market data platform integrating Polymarket and Kalshi HTTP and WebSocket feeds.",
+            "Designed reconnection and subscription logic, a TimescaleDB ingestion pipeline, Docker delivery, and a web application for exploring live orders and event data.",
+        ),
+    ),
+    CuratedProject(
         "react-native-skia-yoga",
+        "React Native Skia Yoga",
         "Creator - React Native rendering prototype",
         (
             "Developed a C++/TypeScript library combining Yoga layout with React Native Skia for declarative, interactive UI rendering.",
-            "Built the JSX intrinsic-node surface and example integration for complex layouts, while documenting the project as an early-stage prototype rather than production software.",
+            "Built the JSX intrinsic-node surface and example integration for complex layouts, while clearly documenting the project as an early-stage prototype.",
         ),
     ),
-    (
+    CuratedProject(
         "holistische",
+        "Holistische",
         "Founder - AI-assisted news platform",
         (
             "Built a private AI-assisted news aggregation product covering German and international reporting.",
             "Designed the product and publishing workflow around source-based aggregation, structured editorial review, and clear positioning.",
         ),
     ),
-    (
-        "cccb-servicepoint-browser",
-        "Creator - browser media integration",
-        (
-            "Built a TypeScript/Bun service that sends text, images, and live Puppeteer browser video to the CCC Berlin Service Point display.",
-            "Connected browser automation and media transport into a small operational display system with explicit commands for each content type.",
-        ),
-    ),
-    (
-        "missing-native-js-syntax",
-        "Creator and maintainer - TypeScript tooling",
-        (
-            "Created a TypeScript transformer and Babel plugin that adds missing JavaScript syntax patterns to existing codebases.",
-            "Packaged the tool for npm with documentation, examples, and automated CI, demonstrating compiler-tooling and developer-experience work.",
-        ),
-    ),
-    (
-        "gpia",
-        "Creator - Android integrity research prototype",
-        (
-            "Investigated Google Play Integrity, SafetyNet, and DroidGuard request flows through a focused protobuf client prototype.",
-            "Applied protocol analysis and binary/API research to document how Android anti-abuse services can be queried from native tooling.",
-        ),
-    ),
-    (
-        "whatsapp",
-        "Creator - private messaging backend",
-        (
-            "Built a private WhatsApp operations backend and dashboard with account authentication, APNs integration, proxy handling, API-key management, and account-event processing.",
-            "Added BullMQ-backed jobs, structured logging, lazy-loaded data tables, and performance-focused API flows for a multi-account service.",
-        ),
-    ),
-    (
+    CuratedProject(
         "Baileys",
+        "Baileys Mobile Protocol Stack",
         "Creator - messaging protocol infrastructure",
         (
             "Extended a private WhatsApp-compatible messaging stack with native-mobile API support, TCP transport, registration flows, media mappings, CAPTCHA handling, and device/session events.",
             "Worked across protocol integration, asynchronous connection state, and mobile-specific behavior in a TypeScript runtime.",
         ),
     ),
-    (
-        "jura",
-        "Creator - legal text analysis prototype",
+    CuratedProject(
+        "whatsapp",
+        "WhatsApp Operations Backend",
+        "Creator - private messaging backend",
         (
-            "Developed a private legal-text analysis prototype with a parser for German statutes and references, MongoDB-backed data models, and a Next.js interface.",
-            "Added AI-assisted checks for legal content and iterated on grammar, extraction, and judgment-analysis workflows.",
+            "Built a private WhatsApp operations backend and dashboard with account authentication, APNs integration, proxy handling, API-key management, and account-event processing.",
+            "Added BullMQ-backed jobs, structured logging, lazy-loaded data tables, and performance-focused API flows for a multi-account service.",
         ),
     ),
-    (
-        "GykiSpace",
-        "Creator - school collaboration platform",
+    CuratedProject(
+        "missing-native-js-syntax",
+        "Missing Native JS Syntax",
+        "Creator and maintainer - TypeScript tooling",
         (
-            "Built a real-time school collaboration and chat project for the GyKi community, extending the earlier school-app work into a shared communication surface.",
-            "Used the project to explore product design, messaging flows, and self-hosted application development.",
+            "Created a TypeScript transformer and Babel plugin that adds missing JavaScript syntax patterns to existing codebases.",
+            "Packaged the tool for npm with documentation, examples, and automated CI, demonstrating compiler-tooling and developer-experience work.",
         ),
     ),
-    (
-        "Lambert-server",
-        "Creator - Node.js server framework",
+    CuratedProject(
+        "PokemonGame",
+        "Pokémon-inspired 2D Game",
+        "Creator - Java game development",
         (
-            "Created an Express-based route handler with convention-driven route registration, JSON error handling, and schema-style request validation.",
-            "Published a reusable npm-oriented server foundation designed to reduce boilerplate across small Node.js services.",
+            "Built a complete 2D game in Java with the LITIengine framework, including game mechanics, assets, and a distributable release.",
+            "Applied object-oriented design and game-engine development in an independently shipped personal project.",
         ),
     ),
-    (
-        "Lambert-orm",
-        "Creator - database abstraction library",
+    CuratedProject(
+        "spotify-playback-sdk-node",
+        "Spotify Playback SDK for Node.js",
+        "Creator - developer library",
         (
-            "Designed a database abstraction layer that exposes path-based data access while allowing the underlying database engine to change independently.",
-            "Implemented a MongoDB adapter and a proxy-style API that fetches only the data needed for each operation.",
+            "Created a Node.js wrapper around Spotify's Web Playback SDK to make browser playback capabilities accessible from JavaScript applications.",
+            "Published the library as a reusable developer integration and maintained supporting documentation and example environments.",
         ),
     ),
-    (
-        "Database-Browser",
-        "Creator - web administration tool",
+    CuratedProject(
+        "carcassonne-ai",
+        "Carcassonne AI",
+        "Creator - AI and game-systems project",
         (
-            "Built a browser-based PHP/JavaScript/MySQL administration tool for inspecting and editing database contents.",
-            "Delivered an early end-to-end application spanning the LAMP stack, server deployment, tabular data views, and write operations.",
+            "Designed and implemented an AI for the board game Carcassonne as a school seminar project, supported by a technical paper and playable implementation.",
+            "Explored search and decision-making techniques alongside Python game logic and a visual game interface.",
         ),
+    ),
+    CuratedProject(
+        "gyki-app",
+        "GyKi Mobile App",
+        "Creator - iOS school companion",
+        (
+            "Built a native iOS app for the Gymnasium Kirchheim community, giving students mobile access to timetables and substitution plans.",
+            "Developed the app as part of a broader school-product effort that later included collaboration and communication tools.",
+        ),
+        date="2018; repository archived Apr 2022",
+    ),
+    CuratedProject(
+        "minecraft-server-admin-panel",
+        "Minecraft Server Admin Panel",
+        "Creator - self-hosted infrastructure tooling",
+        (
+            "Built a web dashboard for creating and administering self-hosted Minecraft servers, covering operational workflows and server configuration.",
+            "Established an early foundation in Linux-hosted services, PHP, SQL, and browser-based administration interfaces.",
+        ),
+        date="2017; repository created Jun 2021",
     ),
 )
 
 
 def curated_project_entries() -> list[KeepTogether]:
-    entries: list[KeepTogether] = []
-    projects = sorted(
-        CURATED_PROJECTS,
-        key=lambda item: datetime.strptime(github_created_month(item[0]), "%b %Y"),
-        reverse=True,
-    )
-    for repository, role, summary in projects:
-        entries.append(
-            project_entry(
-                github_project_title(repository, role),
-                github_created_month(repository),
-                list(summary),
-                space_after=1.6,
-            )
+    return [
+        project_entry(
+            github_project_title(project.repository, project.role, project.title),
+            project.date or github_created_month(project.repository),
+            list(project.summaries),
+            space_after=1.6,
         )
-    return entries
+        for project in CURATED_PROJECTS
+    ]
 
 
 def build_story() -> list:
@@ -459,9 +474,9 @@ def build_story() -> list:
         paragraph(
             "Software engineer with commercial delivery experience across high-performance "
             "mobile applications, WebGL video rendering, full-stack SaaS, and real-time systems. "
-            "Delivered product engineering for PHONT, Exodus, and MyroDex; founded Spacebar "
+            "Delivered product engineering for PHONT, Exodus, and Myrodex; founded Spacebar "
             "(6.7k+ GitHub stars) and built developer tooling with 222k+ npm downloads in 12 months. "
-            "The project history below includes every project named in the full CV.",
+            "Selected projects below highlight product ownership, systems work, and developer tooling.",
             "summary",
         ),
         section("Experience & Ventures"),
@@ -469,10 +484,10 @@ def build_story() -> list:
             "Freelance Software Engineer",
             "2025-2026",
             [
-                f"<b>{link('PHONT', 'https://phont.ai')} (2025; month not recorded):</b> Re-engineered a WebGL/FFmpeg "
+                f"<b>{link('PHONT', 'https://phont.ai')} (Jul-Sep 2025):</b> Re-engineered a WebGL/FFmpeg "
                 "video-export pipeline from real-time capture to deterministic frame-by-frame "
                 "rendering, improving export speed by up to <b>50x in project benchmarks</b>.",
-                f"<b>{link('Exodus', 'https://www.exodus.com')} (2025; month not recorded):</b> Delivered "
+                f"<b>{link('Exodus', 'https://www.exodus.com')} (Oct-Nov 2025):</b> Delivered "
                 "performance-sensitive gestures, animations, and product flows across Exodus "
                 "Mobile and Grateful using React Native, Reanimated, Skia, and native iOS/Android "
                 "integration.",
@@ -480,13 +495,19 @@ def build_story() -> list:
             subtitle="Selected client engagements",
         ),
         entry(
+            f"Founder &amp; Engineer | {link('Myrodex', 'https://myrodex.gg')}",
+            "Mar 2025-present",
+            [
+                "Founded and built a multi-tenant esports operations SaaS end to end across customer and back-office "
+                "apps, organization RBAC, workflows, Stripe billing, background workers, automated "
+                "tests, and a production deployment workflow.",
+            ],
+            space_after=1.0,
+        ),
+        entry(
             f"Founder &amp; Engineer | {link('Spacebar Chat', 'https://spacebar.chat')}",
             "Jan 2021-present",
             [
-                f"<b>{link('MyroDex', 'https://myrodex.gg')} (2026; month not recorded):</b> Founded and built "
-                "a multi-tenant esports operations SaaS end to end across customer and back-office "
-                "apps, organization RBAC, workflows, Stripe billing, background workers, automated "
-                "tests, and a production deployment workflow.",
                 "Founded a self-hostable, Discord-compatible chat, voice, and video "
                 "platform whose flagship repository reached <b>6.7k+ stars and 220+ forks</b>; "
                 "the ecosystem spans HTTP APIs, WebSocket/WebRTC, CDN/media delivery, data "
@@ -498,29 +519,9 @@ def build_story() -> list:
             f"Founder &amp; Engineer | {link('Respond', 'https://github.com/respondchat')}",
             "Jan 2022-present",
             [
-                "Founded a multi-platform messaging initiative uniting WhatsApp, Telegram, "
+                "Founded Respond, a multi-platform messaging app uniting WhatsApp, Telegram, "
                 "Discord, and Fosscord/Spacebar in one client experience; built supporting "
                 "React Native, Rust, and JSI runtime infrastructure.",
-            ],
-            space_after=1.0,
-        ),
-        entry(
-            f"Open-Source Contributor / Maintainer | {link('Trant Labs', 'https://github.com/trantlabs')}",
-            "Jan 2021-Nov 2024",
-            [
-                f"Contributed features, releases, documentation, and CI/CD to {link('missing-native-js-functions', 'https://github.com/trantlabs/missing-native-js-functions')}, "
-                "a zero-dependency JavaScript utility library.",
-            ],
-            space_after=1.0,
-        ),
-        entry(
-            "Independent Software Developer",
-            "From Jan 2018",
-            [
-                f"Built the {link('GyKi', 'https://github.com/samuelscheit/gyki-app')} school app for timetables, substitution plans, and appointments; "
-                f"created the historical {link('Discord Bot Client', 'https://github.com/samuelscheit/discord-bot-client')} (695 stars / 390 forks) "
-                "and Discord bots for commissioned work.",
-                "Built an early database-backed server-management application and developed a foundation in C, Linux, HTML/CSS, PHP, and SQL.",
             ],
             space_after=1.0,
         ),
@@ -561,10 +562,10 @@ def build_story() -> list:
             ],
         ),
         project_entry(
-            f"{link('Browser Fingerprinting Technical Analysis', 'https://github.com/samuelscheit/fingerprinting')} | Co-author",
+            f"{link('Browser Fingerprinting Technical Analysis', 'https://github.com/samuelscheit/fingerprinting')} | Author",
             "May 2024-present",
             [
-                "Co-authored a FingerprintJS-based technical analysis; developed a custom fingerprinting library and dataset to evaluate identification methods, limitations, and countermeasures.",
+                "Authored a FingerprintJS-based technical analysis; developed a custom fingerprinting library and dataset to evaluate identification methods, limitations, and countermeasures.",
             ],
         ),
         project_entry(
@@ -578,35 +579,16 @@ def build_story() -> list:
             f"{link('Spotify DRM Report', 'https://github.com/samuelscheit/spotify-drm-report')} | Independent Technical Research",
             "May 2025 (report 2023)",
             [
-                "Published a proof-of-concept report on a reported missing-DRM-enforcement issue in Spotify's Accesspoint API; no CVE, bounty, or vendor outcome is claimed.",
+                "Published a proof-of-concept report on a reported missing-DRM-enforcement issue in Spotify's Accesspoint API.",
             ],
         ),
         project_entry(
-            f"{link('Team Checkmate / Hackatum 2024', 'https://github.com/samuelscheit/hackatum-2024')} | Systems Challenge",
-            "Nov 2024",
+            f"{link('Discord Bot Client', 'https://github.com/samuelscheit/discord-bot-client')} | Creator",
+            "May 2020",
             [
-                "Co-built a high-concurrency Go REST backend for Check24's car-rental challenge using SQL optimization, in-memory bitmap filtering, B-trees, and fasthttp.",
+                "Created a Discord client fork with bot-login support, exposing a bot-oriented client experience that the official application did not provide.",
+                "Built and maintained a widely adopted open-source project with <b>695 GitHub stars, 390 forks, and 908,716 GitHub release-asset downloads</b> across its ten published installers.",
             ],
-        ),
-        project_entry(
-            "Upstream Mobile &amp; Native Contributions",
-            "Sep-Oct 2024",
-            [
-                f"Landed {link('React Native Skia iOS ProMotion 120 Hz', 'https://github.com/Shopify/react-native-skia/pull/2690')} support, originated its {link('macOS Catalyst approach', 'https://github.com/Shopify/react-native-skia/pull/3296')}, and added {link('iOS support to jsi-rs', 'https://github.com/laptou/jsi-rs/pull/3')} for Rust/JSI interoperability.",
-            ],
-        ),
-        section("Technical Writing"),
-        paragraph(
-            f"{link('Jul 2023', 'https://samuelscheit.com/blog/2023/react-native-rust')} - Using Rust in React Native with jsi-rs; "
-            f"{link('Oct 2024', 'https://samuelscheit.com/blog/2024/react-native-skia-list')} - Implementing the fastest list renderer for React Native; "
-            f"{link('Feb 2025', 'https://samuelscheit.com/blog/2025/bundestagswahl')} - Fehlende Stimmen bei der Bundestagswahl 2025?",
-            "compact",
-        ),
-        section("Selected Additional Projects"),
-        paragraph(
-            "Curated from my own repository history and limited to projects that demonstrate meaningful engineering work. "
-            "Dates use each repository's creation month; summaries focus on recruiter-relevant engineering scope.",
-            "subtitle",
         ),
         *curated_project_entries(),
         section("Technical Skills"),
@@ -653,11 +635,9 @@ def verify_pdf(path: Path) -> None:
         "Samuel Scheit",
         "Freelance Software Engineer",
         "Founder & Engineer",
-        "MyroDex",
+        "Myrodex",
         "Spacebar Chat",
         "Respond",
-        "Trant Labs",
-        "GyKi",
         "Discord Bot Client",
         "Puppeteer Stream",
         "React Native Skia List",
@@ -666,15 +646,18 @@ def verify_pdf(path: Path) -> None:
         "Browser Fingerprinting Technical Analysis",
         "WPlace World Archive",
         "Spotify DRM Report",
-        "Team Checkmate / Hackatum 2024",
-        "TECHNICAL WRITING",
+        "Prediction Market Data Platform",
+        "GyKi Mobile App",
         "Jan 2021",
+        "Mar 2025",
+        "Jul-Sep 2025",
+        "Oct-Nov 2025",
         "Dec 2020",
         "Oct 2024",
         "Feb 2025",
         "Technical University of Munich",
     ]
-    required_text.extend(repository for repository, _role, _summary in CURATED_PROJECTS)
+    required_text.extend(project.title for project in CURATED_PROJECTS)
     missing_text = [item for item in required_text if item not in flat_text]
     if missing_text:
         raise RuntimeError(f"Missing required text in generated PDF: {missing_text}")
@@ -683,12 +666,23 @@ def verify_pdf(path: Path) -> None:
     founder_start = flat_text.index("Founder & Engineer")
     if freelance_start >= founder_start:
         raise RuntimeError("Founder experience must follow freelance experience")
-    if "MyroDex" in flat_text[freelance_start:founder_start]:
-        raise RuntimeError("MyroDex must not be listed under freelance experience")
-    if flat_text.find("MyroDex", founder_start) == -1:
-        raise RuntimeError("MyroDex must be listed under founder experience")
-    if "More repository history" in flat_text or "commits.json" in flat_text:
-        raise RuntimeError("Internal source references must not appear in the recruiter-facing CV")
+    if "Myrodex" in flat_text[freelance_start:founder_start]:
+        raise RuntimeError("Myrodex must not be listed under freelance experience")
+    if flat_text.find("Myrodex", founder_start) == -1:
+        raise RuntimeError("Myrodex must be listed under founder experience")
+    removed_text = [
+        "Open-Source Contributor / Maintainer | Trant Labs",
+        "Team Checkmate / Hackatum 2024",
+        "Upstream Mobile & Native Contributions",
+        "TECHNICAL WRITING",
+        "SELECTED ADDITIONAL PROJECTS",
+        "Curated from my own repository history",
+        "More repository history",
+        "commits.json",
+    ]
+    unexpected_text = [item for item in removed_text if item in flat_text]
+    if unexpected_text:
+        raise RuntimeError(f"Removed content is still present in the recruiter-facing CV: {unexpected_text}")
 
     uris = set()
     for page in reader.pages:
@@ -702,26 +696,20 @@ def verify_pdf(path: Path) -> None:
         "https://github.com/samuelscheit",
         "https://spacebar.chat",
         "https://github.com/respondchat",
-        "https://github.com/trantlabs",
-        "https://github.com/trantlabs/missing-native-js-functions",
-        "https://github.com/samuelscheit/gyki-app",
         "https://github.com/samuelscheit/discord-bot-client",
         "https://github.com/samuelscheit/puppeteer-stream",
         "https://github.com/samuelscheit/react-native-skia-list",
-        "https://github.com/samuelscheit/react-native-skia-yoga",
         "https://phishing.support",
-        "https://github.com/samuelscheit/cccb-servicepoint-browser",
-        "https://github.com/samuelscheit/missing-native-js-syntax",
-        "https://github.com/samuelscheit/GykiSpace",
-        "https://github.com/samuelscheit/Lambert-server",
-        "https://github.com/samuelscheit/Lambert-orm",
-        "https://github.com/samuelscheit/Database-Browser",
         "https://github.com/samuelscheit/bundestagswahl2025",
         "https://github.com/samuelscheit/fingerprinting",
         "https://github.com/samuelscheit/wplace-archive",
         "https://github.com/samuelscheit/spotify-drm-report",
-        "https://github.com/samuelscheit/hackatum-2024",
     }
+    required_uris.update(
+        details["url"]
+        for project in CURATED_PROJECTS
+        if not (details := github_project(project.repository)).get("isPrivate")
+    )
     missing_uris = sorted(required_uris - uris)
     if missing_uris:
         raise RuntimeError(f"Missing required hyperlinks: {missing_uris}")
