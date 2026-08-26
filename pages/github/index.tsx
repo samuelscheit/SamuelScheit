@@ -1,8 +1,14 @@
 import { GetStaticProps, InferGetStaticPropsType } from "next";
 import { Timeline, TimelineItem } from "../../components/timeline";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { Links } from "../../components/Links";
 import Link from "next/link";
+import {
+	deduplicateRepositories,
+	groupProjectsByEarliestContributionYear,
+	shouldExcludeRepository,
+	type TimelineRepository,
+} from "../../github/timeline";
 
 interface RepositoryDetails {
 	id: string;
@@ -78,10 +84,9 @@ interface Commit {
 	refs: string[];
 }
 
-interface Repository {
+interface Repository extends TimelineRepository {
 	details: RepositoryDetails;
 	commits: Commit[];
-	firstCommitDate?: Date;
 }
 
 interface GitHubData {
@@ -102,238 +107,23 @@ interface GitHubData {
 	repositories: { [key: string]: Repository };
 }
 
-interface ProjectGroupByOrg {
-	year: number;
-	orgs: {
-		[org: string]: {
-			org: string;
-			bigProjects: Repository[];
-			smallProjects: Repository[];
-		};
-	};
-}
-
-// Array of repositories to exclude from the timeline
-
-// Function to check if a repository should be excluded
-function shouldExcludeRepo(repo: Repository): boolean {
-	// Exclude if no description
-	if (!repo.details.description || repo.details.description.trim() === "") {
-		return true;
-	}
-
-	return false;
-}
-
-function categorizeProject(repo: Repository, year?: number): "big" | "small" {
-	// Big projects: created by me OR if I committed more than 10 commits OR if it's a fork
-	// Small projects: forked projects with minimal contributions
-
-	const isOwnProject = repo.details.owner.login === "SamuelScheit";
-	const isFork = repo.details.isFork;
-	const commitCount = year ? getCommitsForYear(repo, year).length : repo.commits.length;
-
-	if (isOwnProject) {
-		return "big";
-	}
-
-	// If I committed more than 10 commits, it's a big project
-	if (commitCount > 10) {
-		return "big";
-	}
-
-	// If it's a fork, it's likely a small contribution
-	if (isFork) {
-		return "small";
-	}
-
-	return "small";
-}
-
-// Helper function to extract date from repository description
-function extractDateFromDescription(description: string | null): Date | null {
-	if (!description) return null;
-
-	// Common date patterns in descriptions
-	const datePatterns = [
-		/(\d{4})/, // Just year
-		/(\d{1,2})\/(\d{1,2})\/(\d{4})/, // MM/DD/YYYY or DD/MM/YYYY
-		/(\d{4})-(\d{1,2})-(\d{1,2})/, // YYYY-MM-DD
-		/(\d{1,2})-(\d{1,2})-(\d{4})/, // MM-DD-YYYY or DD-MM-YYYY
-		/(\w+)\s+(\d{4})/, // Month Year (e.g., "January 2023")
-		/(\d{4})\s+(\w+)/, // Year Month (e.g., "2023 January")
-	];
-
-	for (const pattern of datePatterns) {
-		const match = description.match(pattern);
-		if (match) {
-			try {
-				if (pattern.source === "(\\d{4})") {
-					// Just year - create date for January 1st of that year
-					return new Date(parseInt(match[1]), 0, 1);
-				} else if (pattern.source === "(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})") {
-					// MM/DD/YYYY or DD/MM/YYYY - assume MM/DD/YYYY for US format
-					const month = parseInt(match[1]) - 1; // 0-indexed
-					const day = parseInt(match[2]);
-					const year = parseInt(match[3]);
-					return new Date(year, month, day);
-				} else if (pattern.source === "(\\d{4})-(\\d{1,2})-(\\d{1,2})") {
-					// YYYY-MM-DD
-					const year = parseInt(match[1]);
-					const month = parseInt(match[2]) - 1; // 0-indexed
-					const day = parseInt(match[3]);
-					return new Date(year, month, day);
-				} else if (pattern.source === "(\\d{1,2})-(\\d{1,2})-(\\d{4})") {
-					// MM-DD-YYYY or DD-MM-YYYY - assume MM-DD-YYYY
-					const month = parseInt(match[1]) - 1; // 0-indexed
-					const day = parseInt(match[2]);
-					const year = parseInt(match[3]);
-					return new Date(year, month, day);
-				} else if (pattern.source === "(\\w+)\\s+(\\d{4})") {
-					// Month Year
-					const monthName = match[1];
-					const year = parseInt(match[2]);
-					const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
-					return new Date(year, monthIndex, 1);
-				} else if (pattern.source === "(\\d{4})\\s+(\\w+)") {
-					// Year Month
-					const year = parseInt(match[1]);
-					const monthName = match[2];
-					const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
-					return new Date(year, monthIndex, 1);
-				}
-			} catch (error) {
-				// If date parsing fails, continue to next pattern
-				continue;
-			}
-		}
-	}
-
-	return null;
-}
-
-// Helper function to get the first commit date for a repository
-function getFirstCommitDate(repo: Repository): Date {
-	// First, try to extract date from description
-	const descriptionDate = extractDateFromDescription(repo.details.description);
-	if (descriptionDate) {
-		return descriptionDate;
-	}
-
-	// Fall back to first commit date
-	if (repo.commits.length === 0) {
-		// If no commits, fall back to repository creation date
-		return parseISO(repo.details.createdAt);
-	}
-
-	// Get the earliest commit date
-	const commitDates = repo.commits.map((commit) => parseISO(commit.committedDate));
-	return new Date(Math.min(...commitDates.map((date) => date.getTime())));
-}
-
-// Add first commit date to repository objects for efficiency
-function addFirstCommitDates(repos: { [key: string]: Repository }) {
-	Object.values(repos).forEach((repo) => {
-		repo.firstCommitDate = getFirstCommitDate(repo);
-	});
-}
-
 // Helper function to get commits for a specific year
 function getCommitsForYear(repo: Repository, year: number): Commit[] {
 	return repo.commits.filter((commit) => {
 		const commitDate = parseISO(commit.committedDate);
-		return commitDate.getFullYear() === year;
+		return commitDate.getUTCFullYear() === year;
 	});
 }
 
-// Group repositories by year and organization
-function groupReposByYearAndOrg(repos: { [key: string]: Repository }) {
-	const yearGroups: { [year: number]: { [org: string]: Repository[] } } = {};
-
-	Object.values(repos)
-		.filter((repo) => !shouldExcludeRepo(repo))
-		.forEach((repo) => {
-			// Get all unique years from commits
-			const commitYears = new Set<number>();
-
-			// Add the first commit date year
-			const firstCommitDate = repo.firstCommitDate!;
-			commitYears.add(firstCommitDate.getFullYear());
-
-			// Add years from all commits
-			repo.commits.forEach((commit) => {
-				const commitDate = parseISO(commit.committedDate);
-				commitYears.add(commitDate.getFullYear());
-			});
-
-			commitYears.forEach((year) => {
-				const commitsInYear = getCommitsForYear(repo, year).length;
-
-				const org = repo.details.owner.login;
-
-				if (!yearGroups[year]) {
-					yearGroups[year] = {};
-				}
-
-				if (!yearGroups[year][org]) {
-					yearGroups[year][org] = [];
-				}
-
-				// Check if this repo is already added for this year to avoid duplicates
-				const existingRepo = yearGroups[year][org].find((r) => r.details.nameWithOwner === repo.details.nameWithOwner);
-				if (!existingRepo) {
-					yearGroups[year][org].push(repo);
-				}
-			});
-		});
-
-	// Sort repositories within each org by first commit date
-	Object.keys(yearGroups).forEach((year) => {
-		Object.keys(yearGroups[parseInt(year)]).forEach((org) => {
-			yearGroups[parseInt(year)][org].sort((a, b) => {
-				const aFirstCommit = a.firstCommitDate!;
-				const bFirstCommit = b.firstCommitDate!;
-				return bFirstCommit.getTime() - aFirstCommit.getTime();
-			});
-		});
-	});
-
-	return yearGroups;
-}
-
-// Separate big and small projects for each year
-function separateProjectsBySize(repos: { [key: string]: Repository }) {
-	const yearGroups = groupReposByYearAndOrg(repos);
-	const result: { [year: number]: { big: Repository[]; small: Repository[] } } = {};
-
-	Object.keys(yearGroups).forEach((yearStr) => {
-		const year = parseInt(yearStr);
-		const orgs = yearGroups[year];
-		const bigProjects: Repository[] = [];
-		const smallProjects: Repository[] = [];
-
-		Object.values(orgs)
-			.flat()
-			.forEach((repo) => {
-				if (categorizeProject(repo, year) === "big") {
-					bigProjects.push(repo);
-				} else {
-					smallProjects.push(repo);
-				}
-			});
-
-		result[year] = { big: bigProjects, small: smallProjects };
-	});
-
-	return result;
-}
-
-function getTopStarredProjects(repos: { [key: string]: Repository }) {
+function getTopStarredProjects(repositories: Iterable<Repository>) {
 	const seenOrgs = new Set<string>();
 	const topProjects: Repository[] = [];
 
-	Object.values(repos)
-		.filter((repo) => !repo.details.isFork && repo.commits.length > 30 && !shouldExcludeRepo(repo) && repo.details.stargazerCount > 100)
+	deduplicateRepositories(repositories)
+		.filter(
+			(repo) =>
+				!repo.details.isFork && repo.commits.length > 30 && !shouldExcludeRepository(repo) && repo.details.stargazerCount > 100,
+		)
 		.sort((a, b) => b.details.stargazerCount - a.details.stargazerCount)
 		.forEach((repo) => {
 			const org = repo.details.owner.login;
@@ -350,12 +140,6 @@ export const getStaticProps = (async (context) => {
 	// Import the data from the correct path
 	const data: GitHubData = require("../../github/commits.json");
 
-	// Pre-calculate first commit dates and convert to ISO strings for JSON serialization
-	Object.values(data.repositories).forEach((repo) => {
-		const firstCommitDate = getFirstCommitDate(repo);
-		(repo as any).firstCommitDate = firstCommitDate.toISOString();
-	});
-
 	return { props: { data } };
 }) satisfies GetStaticProps<{
 	data: GitHubData;
@@ -363,19 +147,13 @@ export const getStaticProps = (async (context) => {
 
 export default function GitHubTimeline(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	const { data } = props;
-
-	// Convert ISO strings back to Date objects for the component
-	Object.values(data.repositories).forEach((repo) => {
-		if ((repo as any).firstCommitDate) {
-			(repo as any).firstCommitDate = new Date((repo as any).firstCommitDate);
-		}
-	});
+	const repositories = deduplicateRepositories(Object.values(data.repositories));
 
 	// Calculate excluded repositories locally
-	const excludedRepos = Object.values(data.repositories).filter((repo) => shouldExcludeRepo(repo));
+	const excludedRepos = repositories.filter((repo) => shouldExcludeRepository(repo));
 
-	const projectsByYear = separateProjectsBySize(data.repositories);
-	const topProjects = getTopStarredProjects(data.repositories);
+	const projectsByYear = groupProjectsByEarliestContributionYear(repositories);
+	const topProjects = getTopStarredProjects(repositories);
 
 	// Sort years in descending order
 	const sortedYears = Object.keys(projectsByYear)
@@ -421,8 +199,8 @@ export default function GitHubTimeline(props: InferGetStaticPropsType<typeof get
 					</h2>
 					<div style={{ display: "flex", gap: "2rem", justifyContent: "center", flexWrap: "wrap" }}>
 						{topProjects.map((repo) => (
-							<div key={repo.details.nameWithOwner} style={{ flex: "1 1 410px", maxWidth: 410 }}>
-								<ProjectCard repo={repo} size="big" />
+							<div key={repo.details.id} style={{ flex: "1 1 410px", maxWidth: 410 }}>
+								<ProjectCard repo={repo} />
 							</div>
 						))}
 					</div>
@@ -443,7 +221,7 @@ export default function GitHubTimeline(props: InferGetStaticPropsType<typeof get
 										}}
 									>
 										{bigProjects.map((repo) => (
-											<ProjectCard key={repo.details.nameWithOwner} repo={repo} size="big" year={year} />
+											<ProjectCard key={repo.details.id} repo={repo} />
 										))}
 									</div>
 								</TimelineSection>
@@ -457,7 +235,7 @@ export default function GitHubTimeline(props: InferGetStaticPropsType<typeof get
 										}}
 									>
 										{smallProjects.map((repo) => (
-											<SmallProjectCard key={repo.details.nameWithOwner} repo={repo} year={year} />
+											<SmallProjectCard key={repo.details.id} repo={repo} />
 										))}
 									</div>
 								</TimelineSection>
@@ -507,7 +285,7 @@ export default function GitHubTimeline(props: InferGetStaticPropsType<typeof get
 	);
 }
 
-function SmallProjectCard({ repo, year }: { repo: Repository; year: number }) {
+function SmallProjectCard({ repo }: { repo: Repository }) {
 	const linkUrl = repo.details.homepageUrl || repo.details.url;
 	const isClickable = !repo.details.isPrivate || repo.details.homepageUrl;
 
@@ -583,13 +361,13 @@ function SmallProjectCard({ repo, year }: { repo: Repository; year: number }) {
 							color: "rgb(98, 72, 255)",
 						}}
 					>
-						{getCommitsForYear(repo, year).length} commits
+						{repo.commits.length} commits
 					</span>
 				</div>
 			</div>
 
 			<div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
-				{getCommitsForYear(repo, year)
+				{repo.commits
 					.slice(0, 3)
 					.map((commit, index) => (
 						<div
@@ -604,9 +382,9 @@ function SmallProjectCard({ repo, year }: { repo: Repository; year: number }) {
 							• {commit.messageHeadline}
 						</div>
 					))}
-				{getCommitsForYear(repo, year).length > 3 && (
+				{repo.commits.length > 3 && (
 					<div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
-						+{getCommitsForYear(repo, year).length - 3} more commits
+						+{repo.commits.length - 3} more commits
 					</div>
 				)}
 			</div>
@@ -631,8 +409,7 @@ function SmallProjectCard({ repo, year }: { repo: Repository; year: number }) {
 	);
 }
 
-function ProjectCard({ repo, size, year }: { repo: Repository; size: "big" | "small"; year?: number }) {
-	const isOwnProject = repo.details.owner.login === "SamuelScheit";
+function ProjectCard({ repo }: { repo: Repository }) {
 	const linkUrl = repo.details.homepageUrl || repo.details.url;
 	const isClickable = !repo.details.isPrivate || repo.details.homepageUrl;
 
@@ -714,8 +491,7 @@ function ProjectCard({ repo, size, year }: { repo: Repository; size: "big" | "sm
 				)}
 			</div>
 
-			{size === "big" &&
-				repo.details.openGraphImageUrl &&
+			{repo.details.openGraphImageUrl &&
 				repo.details.openGraphImageUrl.includes("repository-images.githubusercontent.com") && (
 					<div
 						style={{
