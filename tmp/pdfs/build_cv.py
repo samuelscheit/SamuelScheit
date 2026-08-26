@@ -616,8 +616,8 @@ def build_story(language: Language) -> list:
         paragraph(
             tr(
                 loc(
-                    "Software engineer with commercial delivery experience across high-performance mobile applications, WebGL video rendering, full-stack SaaS, and real-time systems. Delivered product engineering for PHONT, Exodus, and Myrodex; founded Spacebar (6.7k+ GitHub stars) and built developer tooling with 222k+ npm downloads in 12 months. Selected projects below highlight product ownership, systems work, and developer tooling.",
-                    "Softwareentwickler mit kommerzieller Umsetzungserfahrung in performanten Mobile-Anwendungen, WebGL-Video-Rendering, Full-Stack-SaaS und Echtzeitsystemen. Lieferte Produktentwicklung für PHONT, Exodus und Myrodex, gründete Spacebar (6,7k+ GitHub Stars) und entwickelte Developer-Tooling mit 222k+ npm-Downloads in zwölf Monaten. Die ausgewählten Projekte zeigen Produktverantwortung, Systems Engineering und Developer Tooling.",
+                    "Software engineer with commercial delivery experience across high-performance mobile applications, WebGL video rendering, full-stack SaaS, and real-time systems. Founded and engineered Myrodex; delivered product engineering for PHONT and Exodus; founded Spacebar (6.7k+ GitHub stars); and built developer tooling with 222k+ npm downloads in 12 months. Selected projects below highlight product ownership, systems work, and developer tooling.",
+                    "Softwareentwickler mit kommerzieller Umsetzungserfahrung in performanten Mobile-Anwendungen, WebGL-Video-Rendering, Full-Stack-SaaS und Echtzeitsystemen. Gründete und entwickelte Myrodex, lieferte Produktentwicklung für PHONT und Exodus, gründete Spacebar (6,7k+ GitHub Stars) und entwickelte Developer-Tooling mit 222k+ npm-Downloads in zwölf Monaten. Die ausgewählten Projekte zeigen Produktverantwortung, Systems Engineering und Developer Tooling.",
                 ),
                 language,
             ),
@@ -708,8 +708,8 @@ def build_story(language: Language) -> list:
         paragraph(
             tr(
                 loc(
-                    "<b>German:</b> Native speaker &nbsp;|&nbsp; <b>English:</b> B2 (upper-intermediate)",
-                    "<b>Deutsch:</b> Muttersprache &nbsp;|&nbsp; <b>Englisch:</b> B2 (fortgeschritten)",
+                    "<b>German:</b> Native speaker &nbsp;|&nbsp; <b>English:</b> B2",
+                    "<b>Deutsch:</b> Muttersprache &nbsp;|&nbsp; <b>Englisch:</b> B2",
                 ),
                 language,
             ),
@@ -789,7 +789,7 @@ def expected_text(language: Language) -> list[str]:
             "German:",
             "Native speaker",
             "English:",
-            "B2 (upper-intermediate)",
+            "B2",
             "Technical University of Munich",
         ],
         "de": [
@@ -802,7 +802,7 @@ def expected_text(language: Language) -> list[str]:
             "Deutsch:",
             "Muttersprache",
             "Englisch:",
-            "B2 (fortgeschritten)",
+            "B2",
             "Technische Universität München",
         ],
     }
