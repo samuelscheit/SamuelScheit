@@ -303,7 +303,6 @@ class PortfolioProject:
     sort_date: datetime
     summaries: tuple[str, ...]
     url_override: str | None = None
-    show_private_marker: bool = True
 
 
 # This is a curated recruiter portfolio rather than a repository listing. Each
@@ -313,7 +312,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "npm-malicious-check",
         "npm-malicious-check",
-        "Creator - supply-chain security tooling",
+        "Creator",
         "May 2026",
         datetime(2026, 5, 15),
         (
@@ -335,7 +334,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "prediction_arbitrage",
         "Prediction Market Data Platform",
-        "Creator - real-time market-data platform",
+        "Creator",
         "Sep 2025",
         datetime(2025, 9, 20),
         (
@@ -356,12 +355,11 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "react-native-skia-yoga",
         "React Native Skia Yoga",
-        "Creator - React Native rendering prototype",
+        "Creator",
         "Jul 2025",
         datetime(2025, 7, 30),
         (
             "Developed a C++/TypeScript library combining Yoga layout with React Native Skia for declarative, interactive UI rendering.",
-            "Built the JSX intrinsic-node surface and example integration for complex layouts, while clearly documenting the project as an early-stage prototype.",
         ),
     ),
     PortfolioProject(
@@ -375,7 +373,6 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
             "Designed the product and publishing workflow around source-based aggregation, structured editorial review, and clear positioning.",
         ),
         url_override="https://holistische.de",
-        show_private_marker=False,
     ),
     PortfolioProject(
         "spotify-drm-report",
@@ -420,7 +417,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "Baileys",
         "Baileys & WhatsApp Messaging Stack",
-        "Creator - messaging protocol infrastructure",
+        "Creator",
         "Apr 2023",
         datetime(2023, 4, 20),
         (
@@ -431,7 +428,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "missing-native-js-syntax",
         "Missing Native JS Syntax",
-        "Creator and maintainer - TypeScript tooling",
+        "Creator & Maintainer",
         "Jul 2023",
         datetime(2023, 7, 28),
         (
@@ -442,7 +439,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "PokemonGame",
         "Pokémon-inspired 2D Game",
-        "Creator - Java game development",
+        "Creator",
         "Feb 2021",
         datetime(2021, 2, 24),
         (
@@ -463,7 +460,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "carcassonne-ai",
         "Carcassonne AI",
-        "Creator - AI and game-systems project",
+        "Creator",
         "Nov 2020",
         datetime(2020, 11, 16),
         (
@@ -479,19 +476,18 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
         datetime(2020, 5, 15),
         (
             "Created a Discord client fork with bot-login support, exposing a bot-oriented client experience that the official application did not provide.",
-            "Built and maintained a widely adopted open-source project with 695 GitHub stars, 390 forks, and 908,716 downloads across its ten published installers.",
+            "Built and maintained a widely adopted open-source project with 695 GitHub stars, 390 forks, and 908,716 downloads.",
         ),
     ),
     PortfolioProject(
         "gyki-app",
         "GyKi Mobile App",
-        "Creator - iOS school companion",
-        "2018",
-        datetime(2018, 1, 1),
+        "Creator",
+        "Feb 2019",
+        datetime(2019, 2, 1),
         (
-            "Built a native iOS app for the Gymnasium Kirchheim community, giving students mobile access to timetables and substitution plans.",
+            "Developed GYKI, a school app for Gymnasium Kirchheim students, reaching 1,753 users.",
         ),
-        show_private_marker=False,
     ),
 )
 
@@ -501,8 +497,7 @@ def portfolio_project_title(project: PortfolioProject) -> str:
     if project.url_override:
         return f"{link(project.title, project.url_override)} | {escape(project.role)}"
     if details.get("isPrivate"):
-        marker = " (private)" if project.show_private_marker else ""
-        return f"{escape(project.title)}{marker} | {escape(project.role)}"
+        return f"{escape(project.title)} | {escape(project.role)}"
     return f"{link(project.title, details['url'])} | {escape(project.role)}"
 
 
@@ -514,8 +509,13 @@ def portfolio_project_url(project: PortfolioProject) -> str | None:
     return None if details.get("isPrivate") else str(details["url"])
 
 
-def portfolio_project_entries() -> list:
-    """Lay out the chronological portfolio without leaving a near-empty final page."""
+def portfolio_project_entries() -> list[KeepTogether]:
+    """Render one continuous, newest-first portfolio section.
+
+    The page break is purely typographic: it keeps the Projects section
+    unified while giving the final projects, skills, languages, and education
+    enough room to render as a balanced final page.
+    """
     entries: list = []
     for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True):
         entries.append(
@@ -527,7 +527,7 @@ def portfolio_project_entries() -> list:
             )
         )
         if project.repository == "PokemonGame":
-            entries.extend([PageBreak(), section("Projects (continued)")])
+            entries.append(PageBreak())
     return entries
 
 
@@ -569,7 +569,6 @@ def build_story() -> list:
                 "Mobile and Grateful using React Native, Reanimated, Skia, and native iOS/Android "
                 "integration.",
             ],
-            subtitle="Selected client engagements",
         ),
         entry(
             f"Founder &amp; Engineer | {link('Myrodex', 'https://myrodex.gg')}",
@@ -583,7 +582,7 @@ def build_story() -> list:
         ),
         entry(
             f"Founder &amp; Engineer | {link('Spacebar Chat', 'https://spacebar.chat')}",
-            "Jan 2021-present",
+            "Jan 2021-Jan 2022",
             [
                 "Founded a self-hostable, Discord-compatible chat, voice, and video "
                 "platform whose flagship repository reached <b>6.7k+ stars and 220+ forks</b>; "
@@ -603,6 +602,10 @@ def build_story() -> list:
             space_after=1.0,
         ),
         section("Projects"),
+        paragraph(
+            f"<b>GitHub overview of all work:</b> {link('samuelscheit.com/github', 'https://samuelscheit.com/github')}",
+            "subtitle",
+        ),
         *portfolio_project_entries(),
         section("Technical Skills"),
         paragraph(
@@ -667,6 +670,7 @@ def verify_pdf(path: Path) -> None:
         "Prediction Market Data Platform",
         "GyKi Mobile App",
         "Jan 2021",
+        "Jan 2021-Jan 2022",
         "Mar 2025",
         "Jul-Sep 2025",
         "Oct-Nov 2025",
@@ -712,6 +716,7 @@ def verify_pdf(path: Path) -> None:
         "Lambert-orm",
         "Database-Browser",
         "CAPTCHA",
+        "(private)",
     ]
     unexpected_text = [item for item in removed_text if item in flat_text]
     if unexpected_text:
@@ -737,6 +742,7 @@ def verify_pdf(path: Path) -> None:
     required_uris = {
         "mailto:contact@samuelscheit.com",
         "https://github.com/samuelscheit",
+        "https://samuelscheit.com/github",
         "https://spacebar.chat",
         "https://github.com/respondchat",
         "https://github.com/samuelscheit/discord-bot-client",
