@@ -611,6 +611,11 @@ def build_story() -> list:
             "<b>Mobile &amp; performance:</b> Skia, Reanimated, JSI/Hermes, iOS/Android, C++, Rust, WebGL/FFmpeg",
             "compact",
         ),
+        section("Languages"),
+        paragraph(
+            "<b>German:</b> Native speaker &nbsp;|&nbsp; <b>English:</b> B2 (upper-intermediate)",
+            "compact",
+        ),
         section("Education"),
         paragraph(
             "<b>Technical University of Munich (TUM)</b> | Informatics studies (no degree) | 2022-2024",
@@ -668,6 +673,10 @@ def verify_pdf(path: Path) -> None:
         "Dec 2020",
         "Oct 2024",
         "Feb 2025",
+        "German:",
+        "Native speaker",
+        "English:",
+        "B2 (upper-intermediate)",
         "Technical University of Munich",
     ]
     required_text.extend(project.title for project in PORTFOLIO_PROJECTS)
