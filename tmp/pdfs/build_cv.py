@@ -500,8 +500,8 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
         datetime(2020, 12, 22),
         (
             loc(
-                "Created and maintains a TypeScript browser audio/video capture library for Puppeteer with 222k+ npm downloads in the 12 months ending August 2026, 459+ GitHub stars, and 131 forks.",
-                "Entwickelte und betreut eine TypeScript-Bibliothek zur Audio-/Video-Aufzeichnung aus dem Browser mit Puppeteer; 222k+ npm-Downloads in den zwölf Monaten bis August 2026, 459+ GitHub Stars und 131 Forks.",
+                "Created and maintains a TypeScript browser audio/video capture library for Puppeteer with 222k+ npm downloads, 459+ GitHub stars, and 131 forks.",
+                "Entwickelte und betreut eine TypeScript-Bibliothek zur Audio-/Video-Aufzeichnung aus dem Browser mit Puppeteer; 222k+ npm-Downloads, 459+ GitHub Stars und 131 Forks.",
             ),
         ),
     ),
