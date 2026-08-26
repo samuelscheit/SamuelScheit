@@ -9,6 +9,7 @@ config();
 const TOKEN = process.env.GH_TOKEN;
 const CLI_LOGIN = process.argv.slice(2).find((argument) => !argument.startsWith("-"));
 const LOGIN = process.env.GITHUB_LOGIN || CLI_LOGIN || "samuelscheit";
+const OUTPUT_FILE = `${__dirname}/commits.json`;
 
 const EXCLUDED_REPOS = [
 	"respondchat/assets",
@@ -569,7 +570,7 @@ export async function downloadAllRepos(
 	// Handle updateDetailsOnly mode
 	if (options.updateDetailsOnly) {
 		const fs = require("fs");
-		const outputFile = "commits.json";
+		const outputFile = OUTPUT_FILE;
 
 		// Check if commits.json exists
 		if (!fs.existsSync(outputFile)) {
@@ -619,7 +620,7 @@ export async function downloadAllRepos(
 	let existingData: any = null;
 	if (options.updateDetailsOnly) {
 		const fs = require("fs");
-		const outputFile = "commits.json";
+		const outputFile = OUTPUT_FILE;
 		existingData = JSON.parse(fs.readFileSync(outputFile, "utf8"));
 	}
 
@@ -714,9 +715,8 @@ export async function downloadAllRepos(
 		),
 	};
 
-	const outputFile = `commits.json`;
-	fs.writeFileSync(outputFile, JSON.stringify(outputData, null, 2));
-	console.log(`\n💾 Commit data, repository details, and pull requests saved to: ${outputFile}`);
+	fs.writeFileSync(OUTPUT_FILE, JSON.stringify(outputData, null, 2));
+	console.log(`\n💾 Commit data, repository details, and pull requests saved to: ${OUTPUT_FILE}`);
 	console.log(`📊 Total commits across all repositories: ${outputData.totalCommits}`);
 	console.log(`📊 Total pull requests across all repositories: ${outputData.totalPullRequests}`);
 	console.log(
@@ -738,6 +738,7 @@ Options:
 --update-details, -u    Update only repository details (keep existing commit data)
 --skip-discovery, -s    Skip repository discovery, use hardcoded list
 GITHUB_EXCLUDED_ORGS     Comma-separated organization logins to skip (ExodusMovement is skipped by default)
+Output                   <script directory>/commits.json
 --help, -h             Show this help message
 
 Examples:
