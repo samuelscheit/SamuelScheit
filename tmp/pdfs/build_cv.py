@@ -1,15 +1,16 @@
-"""Build Samuel Scheit's complete, recruiter-focused CV.
+"""Build Samuel Scheit's recruiter-focused CV in English and German.
 
-The project portfolio is deliberately curated rather than generated from every
-repository.  Its entries are validated against the local GitHub metadata so
-only projects Samuel created, not contribution-only repositories or forks, can
-appear in the CV.
+The English copy and its German translation live together in this file.  The
+portfolio is deliberately curated rather than generated from every repository:
+each listed project is validated against the local GitHub metadata as owned by
+Samuel Scheit and not a fork before either PDF is rendered.
 """
 
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 import json
 from pathlib import Path
+from typing import Literal
 from xml.sax.saxutils import escape
 
 from pypdf import PdfReader
@@ -29,8 +30,13 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+Language = Literal["en", "de"]
+
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "output/pdf/samuel-scheit-cv.pdf"
+OUTPUTS: dict[Language, Path] = {
+    "en": ROOT / "output/pdf/samuel-scheit-cv-en.pdf",
+    "de": ROOT / "output/pdf/samuel-scheit-cv-de.pdf",
+}
 
 PAGE_WIDTH, _ = A4
 LEFT_MARGIN = 15 * mm
@@ -42,6 +48,25 @@ MUTED = HexColor("#4B5563")
 ACCENT_HEX = "#0B5D6B"
 ACCENT = HexColor(ACCENT_HEX)
 RULE = HexColor("#AAB7BC")
+
+
+@dataclass(frozen=True)
+class Localized:
+    """English source text paired with its German translation."""
+
+    en: str
+    de: str
+
+    def for_language(self, language: Language) -> str:
+        return getattr(self, language)
+
+
+def loc(en: str, de: str) -> Localized:
+    return Localized(en=en, de=de)
+
+
+def tr(value: Localized, language: Language) -> str:
+    return value.for_language(language)
 
 
 def make_styles() -> dict[str, ParagraphStyle]:
@@ -167,11 +192,7 @@ def normalize(text: str) -> str:
 
 
 def link(label: str, url: str) -> str:
-    return (
-        f'<link href="{escape(url)}">'
-        f'<font color="{ACCENT_HEX}">{escape(label)}</font>'
-        "</link>"
-    )
+    return f'<link href="{escape(url)}"><font color="{ACCENT_HEX}">{escape(label)}</font></link>'
 
 
 def paragraph(text: str, style: str = "compact") -> Paragraph:
@@ -195,8 +216,6 @@ def section(title: str) -> KeepTogether:
 
 
 def heading(title: str, date: str) -> Table:
-    # Keep the date column wide enough for month-qualified ranges such as
-    # ``2023 report; May 2025 publication`` without squeezing project names.
     date_width = 43 * mm
     table = Table(
         [[paragraph(title, "entry_title"), paragraph(escape(date), "date")]],
@@ -221,38 +240,16 @@ def bullets(items: list[str]) -> list[Paragraph]:
     return [paragraph(f"- {item}", "bullet") for item in items]
 
 
-def entry(
-    title: str,
-    date: str,
-    items: list[str],
-    subtitle: str | None = None,
-    space_after: float = 2.6,
-) -> KeepTogether:
-    content = [heading(title, date)]
-    if subtitle:
-        content.append(paragraph(subtitle, "subtitle"))
-    content.extend(bullets(items))
-    content.append(Spacer(1, space_after))
+def entry(title: str, date: str, items: list[str], *, space_after: float = 2.6) -> KeepTogether:
+    content = [heading(title, date), *bullets(items), Spacer(1, space_after)]
     return KeepTogether(content)
-
-
-def project_entry(
-    title: str,
-    date: str,
-    items: list[str],
-    *,
-    subtitle: str | None = None,
-    space_after: float = 2.0,
-) -> KeepTogether:
-    """Create a project entry with the same layout as an experience entry."""
-    return entry(title, date, items, subtitle=subtitle, space_after=space_after)
 
 
 _GITHUB_DATA: dict | None = None
 
 
 def github_repositories() -> dict:
-    """Load the downloaded GitHub metadata once for curated project dates."""
+    """Load the downloaded GitHub metadata once for project ownership checks."""
     global _GITHUB_DATA
     if _GITHUB_DATA is not None:
         return _GITHUB_DATA
@@ -268,24 +265,18 @@ def github_repositories() -> dict:
 
 
 def github_project(name: str) -> dict:
-    """Return a user-created, non-fork repository or fail loudly.
-
-    ``commits.json`` contains both repositories created by Samuel and places
-    where he contributed.  This guard prevents the CV from accidentally
-    presenting upstream contributions as projects he created.
-    """
-    repositories = github_repositories()
+    """Return a user-created, non-fork repository or fail loudly."""
     repository = next(
         (
             value
-            for value in repositories.values()
+            for value in github_repositories().values()
             if (value.get("details") or {}).get("name", "").casefold() == name.casefold()
             and ((value.get("details") or {}).get("owner") or {}).get("login", "").casefold() == "samuelscheit"
         ),
         None,
     )
     if repository is None:
-        raise RuntimeError(f"Repository {name!r} is not present in the GitHub project data as Samuel's repository")
+        raise RuntimeError(f"Repository {name!r} is not owned by Samuel Scheit in the GitHub project data")
     details = repository["details"]
     if details.get("isFork"):
         raise RuntimeError(f"Repository {name!r} is a fork and cannot be presented as a created project")
@@ -294,351 +285,534 @@ def github_project(name: str) -> dict:
 
 @dataclass(frozen=True)
 class PortfolioProject:
-    """A recruiter-relevant project validated against owned GitHub metadata."""
+    """A curated, bilingual project validated against owned GitHub metadata."""
 
     repository: str
-    title: str
-    role: str
-    date: str
+    title: Localized
+    role: Localized
+    date: Localized
     sort_date: datetime
-    summaries: tuple[str, ...]
+    summaries: tuple[Localized, ...]
     url_override: str | None = None
 
 
-# This is a curated recruiter portfolio rather than a repository listing. Each
-# record maps to a project owned by Samuel Scheit and not marked as a fork in
-# GitHub metadata.  Entries are rendered newest-first, the standard CV order.
 PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "npm-malicious-check",
-        "npm-malicious-check",
-        "Creator",
-        "May 2026",
+        loc("npm-malicious-check", "npm-malicious-check"),
+        loc("Creator", "Ersteller"),
+        loc("May 2026", "Mai 2026"),
         datetime(2026, 5, 15),
         (
-            "Built a Python triage utility that downloads npm malware advisories, normalizes them to CSV, and scans local npm, Bun, and Yarn caches for package/version matches.",
-            "Designed the workflow to give developers and incident responders a fast, auditable first check after a supply-chain incident.",
+            loc(
+                "Built a Python triage utility that downloads npm malware advisories, normalizes them to CSV, and scans local npm, Bun, and Yarn caches for package/version matches.",
+                "Entwickelte ein Python-Triage-Tool, das npm-Malware-Hinweise herunterlädt, als CSV normalisiert und lokale npm-, Bun- und Yarn-Caches auf passende Paket-/Versionskombinationen prüft.",
+            ),
+            loc(
+                "Designed the workflow to give developers and incident responders a fast, auditable first check after a supply-chain incident.",
+                "Konzipierte den Ablauf als schnelle, nachvollziehbare Erstprüfung für Entwickler und Incident-Response-Teams nach einem Supply-Chain-Vorfall.",
+            ),
         ),
     ),
     PortfolioProject(
         "phishing.support",
-        "Phishing Support",
-        "Creator",
-        "Jan 2026",
+        loc("Phishing Support", "Phishing Support"),
+        loc("Creator", "Ersteller"),
+        loc("Jan 2026", "Jan. 2026"),
         datetime(2026, 1, 9),
         (
-            "Built an open-source tool for automated analysis, reporting, and tracking of phishing emails and malicious websites, including indicator extraction, automated checks, and abuse/takedown workflows.",
+            loc(
+                "Built an open-source tool for automated analysis, reporting, and tracking of phishing emails and malicious websites, including indicator extraction, automated checks, and abuse/takedown workflows.",
+                "Entwickelte ein Open-Source-Tool zur automatisierten Analyse, Meldung und Nachverfolgung von Phishing-E-Mails und schädlichen Websites, einschließlich Indikator-Extraktion, automatisierter Prüfungen sowie Abuse-/Takedown-Workflows.",
+            ),
         ),
         url_override="https://phishing.support",
     ),
     PortfolioProject(
         "prediction_arbitrage",
-        "Prediction Market Data Platform",
-        "Creator",
-        "Sep 2025",
+        loc("Prediction Market Data Platform", "Datenplattform für Prognosemärkte"),
+        loc("Creator", "Ersteller"),
+        loc("Sep 2025", "Sept. 2025"),
         datetime(2025, 9, 20),
         (
-            "Built a private real-time prediction-market data platform integrating Polymarket and Kalshi HTTP and WebSocket feeds.",
-            "Designed reconnection and subscription logic, a TimescaleDB ingestion pipeline, Docker delivery, and a web application for exploring live orders and event data.",
+            loc(
+                "Built a private real-time prediction-market data platform integrating Polymarket and Kalshi HTTP and WebSocket feeds.",
+                "Entwickelte eine private Echtzeit-Datenplattform für Prognosemärkte mit Polymarket- und Kalshi-Feeds über HTTP und WebSockets.",
+            ),
+            loc(
+                "Designed reconnection and subscription logic, a TimescaleDB ingestion pipeline, Docker delivery, and a web application for exploring live orders and event data.",
+                "Konzipierte Reconnect- und Subscription-Logik, eine TimescaleDB-Ingestion-Pipeline, Docker-Deployment und eine Webanwendung zur Analyse von Live-Orders und Ereignisdaten.",
+            ),
         ),
     ),
     PortfolioProject(
         "wplace-archive",
-        "WPlace World Archive",
-        "Creator",
-        "Aug 2025",
+        loc("WPlace World Archive", "WPlace World Archive"),
+        loc("Creator", "Ersteller"),
+        loc("Aug 2025", "Aug. 2025"),
         datetime(2025, 8, 23),
         (
-            "Built a C++/Linux system to scrape, archive, process, and visualize the entire wplace.live map with tiled storage, VIPS lower-zoom generation, and full-world jobs.",
+            loc(
+                "Built a C++/Linux system to scrape, archive, process, and visualize the entire wplace.live map with tiled storage, VIPS lower-zoom generation, and full-world jobs.",
+                "Entwickelte ein C++/Linux-System zum Scrapen, Archivieren, Verarbeiten und Visualisieren der gesamten wplace.live-Karte mit gekachelter Speicherung, VIPS-generierten Zoomstufen und Full-World-Jobs.",
+            ),
         ),
     ),
     PortfolioProject(
         "react-native-skia-yoga",
-        "React Native Skia Yoga",
-        "Creator",
-        "Jul 2025",
+        loc("React Native Skia Yoga", "React Native Skia Yoga"),
+        loc("Creator", "Ersteller"),
+        loc("Jul 2025", "Juli 2025"),
         datetime(2025, 7, 30),
         (
-            "Developed a C++/TypeScript library combining Yoga layout with React Native Skia for declarative, interactive UI rendering.",
+            loc(
+                "Developed a C++/TypeScript library combining Yoga layout with React Native Skia for declarative, interactive UI rendering.",
+                "Entwickelte eine C++/TypeScript-Bibliothek, die das Yoga-Layoutsystem mit React Native Skia für deklaratives, interaktives UI-Rendering verbindet.",
+            ),
         ),
     ),
     PortfolioProject(
         "holistische",
-        "Holistische",
-        "Founder - AI-assisted news platform",
-        "Jun 2025",
+        loc("Holistische", "Holistische"),
+        loc("Founder", "Gründer"),
+        loc("Jun 2025", "Juni 2025"),
         datetime(2025, 6, 5),
         (
-            "Built an AI-assisted news aggregation product covering German and international reporting.",
-            "Designed the product and publishing workflow around source-based aggregation, structured editorial review, and clear positioning.",
+            loc(
+                "Built an AI-assisted news aggregation product covering German and international reporting.",
+                "Entwickelte ein KI-gestütztes News-Aggregationsprodukt für deutsche und internationale Berichterstattung.",
+            ),
+            loc(
+                "Designed the product and publishing workflow around source-based aggregation, structured editorial review, and clear positioning.",
+                "Gestaltete Produkt- und Publishing-Workflow rund um quellenbasierte Aggregation, strukturierte redaktionelle Prüfung und klare Positionierung.",
+            ),
         ),
         url_override="https://holistische.de",
     ),
     PortfolioProject(
         "spotify-drm-report",
-        "Spotify DRM Report",
-        "Independent Technical Research",
-        "May 2025",
+        loc("Spotify DRM Report", "Spotify-DRM-Report"),
+        loc("Independent Technical Research", "Unabhängige technische Recherche"),
+        loc("May 2025", "Mai 2025"),
         datetime(2025, 5, 20),
         (
-            "Published a proof-of-concept report on a reported missing-DRM-enforcement issue in Spotify's Accesspoint API.",
+            loc(
+                "Published a proof-of-concept report on a reported missing-DRM-enforcement issue in Spotify's Accesspoint API.",
+                "Veröffentlichte einen Proof-of-Concept-Report über ein gemeldetes Problem bei der DRM-Durchsetzung in Spotifys Accesspoint-API.",
+            ),
         ),
     ),
     PortfolioProject(
         "bundestagswahl2025",
-        "Bundestagswahl 2025",
-        "Independent Data Analysis",
-        "Feb 2025",
+        loc("Bundestagswahl 2025", "Bundestagswahl 2025"),
+        loc("Independent Data Analysis", "Unabhängige Datenanalyse"),
+        loc("Feb 2025", "Feb. 2025"),
         datetime(2025, 2, 26),
         (
-            "Built and published a TypeScript/Bun data pipeline and interactive map covering all 299 German federal-election constituencies; documented the methodology in a public article.",
+            loc(
+                "Built and published a TypeScript/Bun data pipeline and interactive map covering all 299 German federal-election constituencies; documented the methodology in a public article.",
+                "Entwickelte und veröffentlichte eine TypeScript/Bun-Datenpipeline sowie eine interaktive Karte für alle 299 deutschen Bundestagswahlkreise; dokumentierte die Methodik in einem öffentlichen Artikel.",
+            ),
         ),
     ),
     PortfolioProject(
         "react-native-skia-list",
-        "React Native Skia List",
-        "Creator",
-        "Oct 2024",
+        loc("React Native Skia List", "React Native Skia List"),
+        loc("Creator", "Ersteller"),
+        loc("Oct 2024", "Okt. 2024"),
         datetime(2024, 10, 15),
         (
-            "Built a Skia/C++ virtualized list that rendered 1,000 items up to 10x faster than existing React Native list-rendering solutions with about 70% fewer dropped frames; 240+ GitHub stars.",
+            loc(
+                "Built a Skia/C++ virtualized list that rendered 1,000 items up to 10x faster than existing React Native list-rendering solutions with about 70% fewer dropped frames; 240+ GitHub stars.",
+                "Entwickelte eine virtualisierte Skia/C++-Liste, die 1.000 Elemente bis zu 10x schneller als bestehende React-Native-Listen renderte und dabei rund 70 % weniger Frame-Drops erreichte; 240+ GitHub Stars.",
+            ),
         ),
     ),
     PortfolioProject(
         "fingerprinting",
-        "Browser Fingerprinting Technical Analysis",
-        "Author",
-        "May 2024",
+        loc("Browser Fingerprinting Technical Analysis", "Technische Analyse des Browser-Fingerprintings"),
+        loc("Author", "Autor"),
+        loc("May 2024", "Mai 2024"),
         datetime(2024, 5, 8),
         (
-            "Authored a FingerprintJS-based technical analysis; developed a custom fingerprinting library and dataset to evaluate identification methods, limitations, and countermeasures.",
-        ),
-    ),
-    PortfolioProject(
-        "Baileys",
-        "Baileys & WhatsApp Messaging Stack",
-        "Creator",
-        "Apr 2023",
-        datetime(2023, 4, 20),
-        (
-            "Extended a private WhatsApp-compatible messaging stack with native-mobile API support, TCP transport, registration flows, media mappings, and device/session events.",
-            "Built the associated operations backend and dashboard with account authentication, APNs integration, proxy handling, API-key management, BullMQ jobs, structured logging, and performance-focused data flows.",
+            loc(
+                "Authored a FingerprintJS-based technical analysis; developed a custom fingerprinting library and dataset to evaluate identification methods, limitations, and countermeasures.",
+                "Verfasste eine technische Analyse auf Basis von FingerprintJS und entwickelte eine eigene Fingerprinting-Bibliothek sowie einen Datensatz zur Bewertung von Identifikationsmethoden, Grenzen und Gegenmaßnahmen.",
+            ),
         ),
     ),
     PortfolioProject(
         "missing-native-js-syntax",
-        "Missing Native JS Syntax",
-        "Creator & Maintainer",
-        "Jul 2023",
+        loc("Missing Native JS Syntax", "Missing Native JS Syntax"),
+        loc("Creator & Maintainer", "Ersteller & Betreuer"),
+        loc("Jul 2023", "Juli 2023"),
         datetime(2023, 7, 28),
         (
-            "Created a TypeScript transformer and Babel plugin that adds missing JavaScript syntax patterns to existing codebases.",
-            "Packaged the tool for npm with documentation, examples, and automated CI, demonstrating compiler-tooling and developer-experience work.",
+            loc(
+                "Created a TypeScript transformer and Babel plugin that adds missing JavaScript syntax patterns to existing codebases.",
+                "Entwickelte einen TypeScript-Transformer und ein Babel-Plugin, die fehlende JavaScript-Syntaxmuster in bestehende Codebasen einbringen.",
+            ),
+            loc(
+                "Packaged the tool for npm with documentation, examples, and automated CI, demonstrating compiler-tooling and developer-experience work.",
+                "Paketierte das Tool für npm mit Dokumentation, Beispielen und automatisierter CI und zeigte damit Erfahrung in Compiler-Tooling und Developer Experience.",
+            ),
+        ),
+    ),
+    PortfolioProject(
+        "Baileys",
+        loc("Baileys & WhatsApp Messaging Stack", "Baileys & WhatsApp Messaging Stack"),
+        loc("Creator", "Ersteller"),
+        loc("Apr 2023", "Apr. 2023"),
+        datetime(2023, 4, 20),
+        (
+            loc(
+                "Extended a private WhatsApp-compatible messaging stack with native-mobile API support, TCP transport, registration flows, media mappings, and device/session events.",
+                "Erweiterte einen privaten WhatsApp-kompatiblen Messaging-Stack um Native-Mobile-API-Support, TCP-Transport, Registrierungsabläufe, Media-Mappings sowie Geräte-/Session-Events.",
+            ),
+            loc(
+                "Built the associated operations backend and dashboard with account authentication, APNs integration, proxy handling, API-key management, BullMQ jobs, structured logging, and performance-focused data flows.",
+                "Entwickelte das zugehörige Operations-Backend und Dashboard mit Account-Authentifizierung, APNs-Integration, Proxy-Handling, API-Key-Verwaltung, BullMQ-Jobs, strukturiertem Logging und performanceorientierten Datenflüssen.",
+            ),
         ),
     ),
     PortfolioProject(
         "PokemonGame",
-        "Pokémon-inspired 2D Game",
-        "Creator",
-        "Feb 2021",
+        loc("Pokémon-inspired 2D Game", "Pokémon-inspiriertes 2D-Spiel"),
+        loc("Creator", "Ersteller"),
+        loc("Feb 2021", "Feb. 2021"),
         datetime(2021, 2, 24),
         (
-            "Built a complete 2D game in Java with the LITIengine framework, including game mechanics, assets, and a distributable release.",
-            "Applied object-oriented design and game-engine development in an independently shipped personal project.",
+            loc(
+                "Built a complete 2D game in Java with the LITIengine framework, including game mechanics, assets, and a distributable release.",
+                "Entwickelte ein vollständiges 2D-Spiel in Java mit dem LITIengine-Framework, einschließlich Spielmechanik, Assets und distributierbarem Release.",
+            ),
+            loc(
+                "Applied object-oriented design and game-engine development in an independently shipped personal project.",
+                "Setzte objektorientiertes Design und Game-Engine-Entwicklung in einem eigenständig veröffentlichten Projekt ein.",
+            ),
         ),
     ),
     PortfolioProject(
         "puppeteer-stream",
-        "Puppeteer Stream",
-        "Creator & Maintainer",
-        "Dec 2020",
+        loc("Puppeteer Stream", "Puppeteer Stream"),
+        loc("Creator & Maintainer", "Ersteller & Betreuer"),
+        loc("Dec 2020", "Dez. 2020"),
         datetime(2020, 12, 22),
         (
-            "Created and maintains a TypeScript browser audio/video capture library for Puppeteer with 222k+ npm downloads in the 12 months ending August 2026, 459+ GitHub stars, and 131 forks.",
+            loc(
+                "Created and maintains a TypeScript browser audio/video capture library for Puppeteer with 222k+ npm downloads in the 12 months ending August 2026, 459+ GitHub stars, and 131 forks.",
+                "Entwickelte und betreut eine TypeScript-Bibliothek zur Audio-/Video-Aufzeichnung aus dem Browser mit Puppeteer; 222k+ npm-Downloads in den zwölf Monaten bis August 2026, 459+ GitHub Stars und 131 Forks.",
+            ),
         ),
     ),
     PortfolioProject(
         "carcassonne-ai",
-        "Carcassonne AI",
-        "Creator",
-        "Nov 2020",
+        loc("Carcassonne AI", "Carcassonne-KI"),
+        loc("Creator", "Ersteller"),
+        loc("Nov 2020", "Nov. 2020"),
         datetime(2020, 11, 16),
         (
-            "Designed and implemented an AI for the board game Carcassonne as a school seminar project, supported by a technical paper and playable implementation.",
-            "Explored search and decision-making techniques alongside Python game logic and a visual game interface.",
+            loc(
+                "Designed and implemented an AI for the board game Carcassonne as a school seminar project, supported by a technical paper and playable implementation.",
+                "Konzipierte und implementierte eine KI für das Brettspiel Carcassonne als schulisches Seminarprojekt, ergänzt durch eine technische Ausarbeitung und spielbare Implementierung.",
+            ),
+            loc(
+                "Explored search and decision-making techniques alongside Python game logic and a visual game interface.",
+                "Erprobte Such- und Entscheidungsverfahren zusammen mit Python-Spiellogik und einer visuellen Spieloberfläche.",
+            ),
         ),
     ),
     PortfolioProject(
         "discord-bot-client",
-        "Discord Bot Client",
-        "Creator",
-        "May 2020",
+        loc("Discord Bot Client", "Discord Bot Client"),
+        loc("Creator", "Ersteller"),
+        loc("May 2020", "Mai 2020"),
         datetime(2020, 5, 15),
         (
-            "Created a Discord client fork with bot-login support, exposing a bot-oriented client experience that the official application did not provide.",
-            "Built and maintained a widely adopted open-source project with 695 GitHub stars, 390 forks, and 908,716 downloads.",
+            loc(
+                "Created a Discord client fork with bot-login support, exposing a bot-oriented client experience that the official application did not provide.",
+                "Entwickelte einen Discord-Client-Fork mit Bot-Login-Support und ermöglichte damit eine botorientierte Client-Erfahrung, die die offizielle Anwendung nicht bot.",
+            ),
+            loc(
+                "Built and maintained a widely adopted open-source project with 695 GitHub stars, 390 forks, and 908,716 downloads.",
+                "Entwickelte und betreute ein weit verbreitetes Open-Source-Projekt mit 695 GitHub Stars, 390 Forks und 908.716 Downloads.",
+            ),
         ),
     ),
     PortfolioProject(
         "gyki-app",
-        "GyKi Mobile App",
-        "Creator",
-        "Feb 2019",
+        loc("GyKi Mobile App", "GyKi Mobile App"),
+        loc("Creator", "Ersteller"),
+        loc("Feb 2019", "Feb. 2019"),
         datetime(2019, 2, 1),
         (
-            "Developed GYKI, a school app for Gymnasium Kirchheim students, reaching 1,753 users.",
+            loc(
+                "Developed GYKI, a school app for Gymnasium Kirchheim students, reaching 1,753 users.",
+                "Entwickelte GYKI, eine Schul-App für Schülerinnen und Schüler des Gymnasium Kirchheim, die 1.753 Nutzer erreichte.",
+            ),
         ),
     ),
 )
 
 
-def portfolio_project_title(project: PortfolioProject) -> str:
+def portfolio_project_title(project: PortfolioProject, language: Language) -> str:
     details = github_project(project.repository)
+    title = tr(project.title, language)
+    role = tr(project.role, language)
     if project.url_override:
-        return f"{link(project.title, project.url_override)} | {escape(project.role)}"
+        return f"{link(title, project.url_override)} | {escape(role)}"
     if details.get("isPrivate"):
-        return f"{escape(project.title)} | {escape(project.role)}"
-    return f"{link(project.title, details['url'])} | {escape(project.role)}"
+        return f"{escape(title)} | {escape(role)}"
+    return f"{link(title, details['url'])} | {escape(role)}"
 
 
 def portfolio_project_url(project: PortfolioProject) -> str | None:
-    """Return the recruiter-facing URL while keeping private projects private."""
+    """Return the recruiter-facing URL while keeping private repositories unlinked."""
     if project.url_override:
         return project.url_override
     details = github_project(project.repository)
     return None if details.get("isPrivate") else str(details["url"])
 
 
-def portfolio_project_entries() -> list[KeepTogether]:
-    """Render one continuous, newest-first portfolio section.
-
-    The page break is purely typographic: it keeps the Projects section
-    unified while giving the final projects, skills, languages, and education
-    enough room to render as a balanced final page.
-    """
-    entries: list = []
-    for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True):
-        entries.append(
-            project_entry(
-                portfolio_project_title(project),
-                project.date,
-                list(project.summaries),
-                space_after=1.6,
-            )
+def portfolio_project_entries(language: Language) -> list[KeepTogether]:
+    """Render a continuous, newest-first portfolio section."""
+    return [
+        entry(
+            portfolio_project_title(project, language),
+            tr(project.date, language),
+            [tr(summary, language) for summary in project.summaries],
+            space_after=1.6,
         )
-        if project.repository == "PokemonGame":
-            entries.append(PageBreak())
-    return entries
+        for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True)
+    ]
 
 
-def build_story() -> list:
+CONTACT = (
+    "Munich, Germany"
+    f" | {link('+49 160 97788689', 'tel:+491609778869')}"
+    f" | {link('contact@samuelscheit.com', 'mailto:contact@samuelscheit.com')}"
+    f" | {link('samuelscheit.com', 'https://samuelscheit.com')}"
+    f" | {link('GitHub', 'https://github.com/samuelscheit')}"
+    f" | {link('LinkedIn', 'https://www.linkedin.com/in/samuel-scheit-343436247/')}"
+)
+CONTACT_DE = CONTACT.replace("Munich, Germany", "München, Deutschland")
+
+
+def build_story(language: Language) -> list:
     return [
         paragraph("Samuel Scheit", "name"),
         paragraph(
-            "Software Engineer | Full-Stack, React Native &amp; Performance Engineering",
+            tr(
+                loc(
+                    "Software Engineer | Full-Stack, React Native &amp; Performance Engineering",
+                    "Softwareentwickler | Full-Stack, React Native &amp; Performance Engineering",
+                ),
+                language,
+            ),
             "headline",
         ),
+        paragraph(CONTACT if language == "en" else CONTACT_DE, "contact"),
+        section(tr(loc("Summary", "Profil"), language)),
         paragraph(
-            "Munich, Germany"
-            f" | {link('+49 160 97788689', 'tel:+491609778869')}"
-            f" | {link('contact@samuelscheit.com', 'mailto:contact@samuelscheit.com')}"
-            f" | {link('samuelscheit.com', 'https://samuelscheit.com')}"
-            f" | {link('GitHub', 'https://github.com/samuelscheit')}"
-            f" | {link('LinkedIn', 'https://www.linkedin.com/in/samuel-scheit-343436247/')}",
-            "contact",
-        ),
-        section("Summary"),
-        paragraph(
-            "Software engineer with commercial delivery experience across high-performance "
-            "mobile applications, WebGL video rendering, full-stack SaaS, and real-time systems. "
-            "Delivered product engineering for PHONT, Exodus, and Myrodex; founded Spacebar "
-            "(6.7k+ GitHub stars) and built developer tooling with 222k+ npm downloads in 12 months. "
-            "Selected projects below highlight product ownership, systems work, and developer tooling.",
+            tr(
+                loc(
+                    "Software engineer with commercial delivery experience across high-performance mobile applications, WebGL video rendering, full-stack SaaS, and real-time systems. Delivered product engineering for PHONT, Exodus, and Myrodex; founded Spacebar (6.7k+ GitHub stars) and built developer tooling with 222k+ npm downloads in 12 months. Selected projects below highlight product ownership, systems work, and developer tooling.",
+                    "Softwareentwickler mit kommerzieller Umsetzungserfahrung in performanten Mobile-Anwendungen, WebGL-Video-Rendering, Full-Stack-SaaS und Echtzeitsystemen. Lieferte Produktentwicklung für PHONT, Exodus und Myrodex, gründete Spacebar (6,7k+ GitHub Stars) und entwickelte Developer-Tooling mit 222k+ npm-Downloads in zwölf Monaten. Die ausgewählten Projekte zeigen Produktverantwortung, Systems Engineering und Developer Tooling.",
+                ),
+                language,
+            ),
             "summary",
         ),
-        section("Experience & Ventures"),
+        section(tr(loc("Experience & Ventures", "Berufserfahrung & Gründungen"), language)),
         entry(
-            "Freelance Software Engineer",
+            tr(loc("Freelance Software Engineer", "Freiberuflicher Softwareentwickler"), language),
             "2025-2026",
             [
-                f"<b>{link('PHONT', 'https://phont.ai')} (Jul-Sep 2025):</b> Re-engineered a WebGL/FFmpeg "
-                "video-export pipeline from real-time capture to deterministic frame-by-frame "
-                "rendering, improving export speed by up to <b>50x in project benchmarks</b>.",
-                f"<b>{link('Exodus', 'https://www.exodus.com')} (Oct-Nov 2025):</b> Delivered "
-                "performance-sensitive gestures, animations, and product flows across Exodus "
-                "Mobile and Grateful using React Native, Reanimated, Skia, and native iOS/Android "
-                "integration.",
+                tr(
+                    loc(
+                        f"<b>{link('PHONT', 'https://phont.ai')} (Jul-Sep 2025):</b> Re-engineered a WebGL/FFmpeg video-export pipeline from real-time capture to deterministic frame-by-frame rendering, improving export speed by up to <b>50x in project benchmarks</b>.",
+                        f"<b>{link('PHONT', 'https://phont.ai')} (Juli-Sept. 2025):</b> Entwickelte eine WebGL/FFmpeg-Video-Export-Pipeline von Echtzeitaufzeichnung zu deterministischem Frame-by-Frame-Rendering um und beschleunigte den Export in Projektbenchmarks um bis zu <b>50x</b>.",
+                    ),
+                    language,
+                ),
+                tr(
+                    loc(
+                        f"<b>{link('Exodus', 'https://www.exodus.com')} (Oct-Nov 2025):</b> Delivered performance-sensitive gestures, animations, and product flows across Exodus Mobile and Grateful using React Native, Reanimated, Skia, and native iOS/Android integration.",
+                        f"<b>{link('Exodus', 'https://www.exodus.com')} (Okt.-Nov. 2025):</b> Entwickelte performancekritische Gesten, Animationen und Produktabläufe für Exodus Mobile und Grateful mit React Native, Reanimated, Skia sowie nativer iOS-/Android-Integration.",
+                    ),
+                    language,
+                ),
             ],
         ),
         entry(
-            f"Founder &amp; Engineer | {link('Myrodex', 'https://myrodex.gg')}",
-            "Mar 2025-present",
+            f"{tr(loc('Founder &amp; Engineer', 'Gründer &amp; Entwickler'), language)} | {link('Myrodex', 'https://myrodex.gg')}",
+            tr(loc("Mar 2025-present", "März 2025-heute"), language),
             [
-                "Founded and built a multi-tenant esports operations SaaS end to end across customer and back-office "
-                "apps, organization RBAC, workflows, Stripe billing, background workers, automated "
-                "tests, and a production deployment workflow.",
+                tr(
+                    loc(
+                        "Founded and built a multi-tenant esports operations SaaS end to end across customer and back-office apps, organization RBAC, workflows, Stripe billing, background workers, automated tests, and a production deployment workflow.",
+                        "Gründete und entwickelte eine Multi-Tenant-SaaS für Esports-Operations end-to-end: Kunden- und Backoffice-Anwendungen, organisationsweite RBAC, Workflows, Stripe-Abrechnung, Background Worker, automatisierte Tests und Produktions-Deployment.",
+                    ),
+                    language,
+                ),
             ],
             space_after=1.0,
         ),
         entry(
-            f"Founder &amp; Engineer | {link('Spacebar Chat', 'https://spacebar.chat')}",
-            "Jan 2021-Jan 2022",
+            f"{tr(loc('Founder &amp; Engineer', 'Gründer &amp; Entwickler'), language)} | {link('Spacebar Chat', 'https://spacebar.chat')}",
+            tr(loc("Jan 2021-Jan 2022", "Jan. 2021-Jan. 2022"), language),
             [
-                "Founded a self-hostable, Discord-compatible chat, voice, and video "
-                "platform whose flagship repository reached <b>6.7k+ stars and 220+ forks</b>; "
-                "the ecosystem spans HTTP APIs, WebSocket/WebRTC, CDN/media delivery, data "
-                "models, administration tooling, and clients.",
+                tr(
+                    loc(
+                        "Founded a self-hostable, Discord-compatible chat, voice, and video platform whose flagship repository reached <b>6.7k+ stars and 220+ forks</b>; the ecosystem spans HTTP APIs, WebSocket/WebRTC, CDN/media delivery, data models, administration tooling, and clients.",
+                        "Gründete eine selbst hostbare, Discord-kompatible Plattform für Chat, Sprache und Video. Das Haupt-Repository erreichte <b>6,7k+ Stars und 220+ Forks</b>; das Ökosystem umfasst HTTP-APIs, WebSocket/WebRTC, CDN-/Medienauslieferung, Datenmodelle, Administrationstools und Clients.",
+                    ),
+                    language,
+                ),
             ],
             space_after=1.0,
         ),
         entry(
-            f"Founder &amp; Engineer | {link('Respond', 'https://github.com/respondchat')}",
-            "Jan 2022-Dec 2024",
+            f"{tr(loc('Founder &amp; Engineer', 'Gründer &amp; Entwickler'), language)} | {link('Respond', 'https://github.com/respondchat')}",
+            tr(loc("Jan 2022-Dec 2024", "Jan. 2022-Dez. 2024"), language),
             [
-                "Founded Respond, a multi-platform messaging app uniting WhatsApp, Telegram, "
-                "Discord, and Fosscord/Spacebar in one client experience; built supporting "
-                "React Native, Rust, and JSI runtime infrastructure.",
+                tr(
+                    loc(
+                        "Founded Respond, a multi-platform messaging app uniting WhatsApp, Telegram, Discord, and Fosscord/Spacebar in one client experience; built supporting React Native, Rust, and JSI runtime infrastructure.",
+                        "Gründete Respond, eine plattformübergreifende Messaging-App, die WhatsApp, Telegram, Discord und Fosscord/Spacebar in einem Client vereint; entwickelte die zugrunde liegende React-Native-, Rust- und JSI-Runtime-Infrastruktur.",
+                    ),
+                    language,
+                ),
             ],
             space_after=1.0,
         ),
-        section("Projects"),
+        section(tr(loc("Projects", "Projekte"), language)),
         paragraph(
-            f"<b>GitHub overview of all work:</b> {link('samuelscheit.com/github', 'https://samuelscheit.com/github')}",
+            f"<b>{tr(loc('GitHub overview of all work:', 'GitHub-Übersicht aller Arbeiten:'), language)}</b> "
+            f"{link('samuelscheit.com/github', 'https://samuelscheit.com/github')}",
             "subtitle",
         ),
-        *portfolio_project_entries(),
-        section("Technical Skills"),
+        *portfolio_project_entries(language),
+        section(tr(loc("Technical Skills", "Technische Fähigkeiten"), language)),
         paragraph(
-            "<b>Primary:</b> TypeScript, JavaScript, React, Next.js, React Native, Node.js/Bun<br/>"
-            "<b>Backend &amp; delivery:</b> PostgreSQL, GraphQL, WebSocket/WebRTC, Docker, Linux, Playwright, CI/CD, Go<br/>"
-            "<b>Mobile &amp; performance:</b> Skia, Reanimated, JSI/Hermes, iOS/Android, C++, Rust, WebGL/FFmpeg",
+            tr(
+                loc(
+                    "<b>Primary:</b> TypeScript, JavaScript, React, Next.js, React Native, Node.js/Bun<br/><b>Backend &amp; delivery:</b> PostgreSQL, GraphQL, WebSocket/WebRTC, Docker, Linux, Playwright, CI/CD, Go<br/><b>Mobile &amp; performance:</b> Skia, Reanimated, JSI/Hermes, iOS/Android, C++, Rust, WebGL/FFmpeg",
+                    "<b>Kernkompetenzen:</b> TypeScript, JavaScript, React, Next.js, React Native, Node.js/Bun<br/><b>Backend &amp; Delivery:</b> PostgreSQL, GraphQL, WebSocket/WebRTC, Docker, Linux, Playwright, CI/CD, Go<br/><b>Mobile &amp; Performance:</b> Skia, Reanimated, JSI/Hermes, iOS/Android, C++, Rust, WebGL/FFmpeg",
+                ),
+                language,
+            ),
             "compact",
         ),
-        section("Languages"),
+        section(tr(loc("Languages", "Sprachen"), language)),
         paragraph(
-            "<b>German:</b> Native speaker &nbsp;|&nbsp; <b>English:</b> B2 (upper-intermediate)",
+            tr(
+                loc(
+                    "<b>German:</b> Native speaker &nbsp;|&nbsp; <b>English:</b> B2 (upper-intermediate)",
+                    "<b>Deutsch:</b> Muttersprache &nbsp;|&nbsp; <b>Englisch:</b> B2 (fortgeschritten)",
+                ),
+                language,
+            ),
             "compact",
         ),
-        section("Education"),
+        section(tr(loc("Education", "Ausbildung"), language)),
         paragraph(
-            "<b>Technical University of Munich (TUM)</b> | Informatics studies (no degree) | 2022-2024",
+            tr(
+                loc(
+                    "<b>Technical University of Munich (TUM)</b> | Informatics studies (no degree) | 2022-2024",
+                    "<b>Technische Universität München (TUM)</b> | Informatikstudium (ohne Abschluss) | 2022-2024",
+                ),
+                language,
+            ),
             "compact",
         ),
         Spacer(1, 1.2),
         paragraph(
-            "<b>Gymnasium Kirchheim</b> | Allgemeine Hochschulreife (Abitur), grade 1.9 | 2022",
+            tr(
+                loc(
+                    "<b>Gymnasium Kirchheim</b> | Allgemeine Hochschulreife (Abitur), grade 1.9 | 2022",
+                    "<b>Gymnasium Kirchheim</b> | Allgemeine Hochschulreife (Abitur), Abschlussnote 1,9 | 2022",
+                ),
+                language,
+            ),
             "compact",
         ),
     ]
 
 
-def verify_pdf(path: Path) -> None:
+REMOVED_TEXT = (
+    "Open-Source Contributor / Maintainer | Trant Labs",
+    "Team Checkmate / Hackatum 2024",
+    "Upstream Mobile & Native Contributions",
+    "TECHNICAL WRITING",
+    "SELECTED ADDITIONAL PROJECTS",
+    "Spotify Playback SDK for Node.js",
+    "WhatsApp Operations Backend",
+    "Minecraft Server Admin Panel",
+    "cccb-servicepoint-browser",
+    "GykiSpace",
+    "Lambert-server",
+    "Lambert-orm",
+    "Database-Browser",
+    "CAPTCHA",
+    "(private)",
+    "PROJECTS (CONTINUED)",
+    "GitHub release-asset",
+    "across its ten published installers.",
+    "JSX intrinsic-node surface",
+)
+
+
+def expected_text(language: Language) -> list[str]:
+    shared = [
+        "Samuel Scheit",
+        "Myrodex",
+        "Spacebar Chat",
+        "Respond",
+        "Discord Bot Client",
+        "Puppeteer Stream",
+        "Phishing Support",
+        "WPlace World Archive",
+        "React Native Skia Yoga",
+        "Holistische",
+        "908,716" if language == "en" else "908.716",
+        "samuelscheit.com/github",
+    ]
+    language_specific = {
+        "en": [
+            "Freelance Software Engineer",
+            "Founder & Engineer",
+            "Jan 2021-Jan 2022",
+            "Jan 2022-Dec 2024",
+            "Jul-Sep 2025",
+            "Oct-Nov 2025",
+            "German:",
+            "Native speaker",
+            "English:",
+            "B2 (upper-intermediate)",
+            "Technical University of Munich",
+        ],
+        "de": [
+            "Freiberuflicher Softwareentwickler",
+            "Gründer & Entwickler",
+            "Jan. 2021-Jan. 2022",
+            "Jan. 2022-Dez. 2024",
+            "Juli-Sept. 2025",
+            "Okt.-Nov. 2025",
+            "Deutsch:",
+            "Muttersprache",
+            "Englisch:",
+            "B2 (fortgeschritten)",
+            "Technische Universität München",
+        ],
+    }
+    return shared + language_specific[language] + [tr(project.title, language) for project in PORTFOLIO_PROJECTS]
+
+
+def verify_pdf(path: Path, language: Language) -> None:
     reader = PdfReader(path)
     if len(reader.pages) < 2:
-        raise RuntimeError(
-            "The complete project history should span at least two pages; "
-            f"generated {len(reader.pages)} page"
-        )
+        raise RuntimeError(f"Expected a complete multi-page CV, generated {len(reader.pages)} page")
 
     pages_text: list[str] = []
     for page in reader.pages:
@@ -648,89 +822,26 @@ def verify_pdf(path: Path) -> None:
             raise RuntimeError(f"Expected A4, generated {width:.1f} x {height:.1f} points")
         pages_text.append(page.extract_text() or "")
 
-    text = "\n".join(pages_text)
-    # ReportLab may insert line breaks in long headings while extracting text;
-    # keep a whitespace-normalized copy for content assertions.
-    flat_text = " ".join(text.split())
-    required_text = [
-        "Samuel Scheit",
-        "Freelance Software Engineer",
-        "Founder & Engineer",
-        "Myrodex",
-        "Spacebar Chat",
-        "Respond",
-        "Discord Bot Client",
-        "Puppeteer Stream",
-        "React Native Skia List",
-        "Phishing Support",
-        "Bundestagswahl 2025",
-        "Browser Fingerprinting Technical Analysis",
-        "WPlace World Archive",
-        "Spotify DRM Report",
-        "Prediction Market Data Platform",
-        "GyKi Mobile App",
-        "Jan 2021",
-        "Jan 2021-Jan 2022",
-        "Mar 2025",
-        "Jul-Sep 2025",
-        "Oct-Nov 2025",
-        "Dec 2020",
-        "Oct 2024",
-        "Feb 2025",
-        "German:",
-        "Native speaker",
-        "English:",
-        "B2 (upper-intermediate)",
-        "Technical University of Munich",
-    ]
-    required_text.extend(project.title for project in PORTFOLIO_PROJECTS)
-    missing_text = [item for item in required_text if item not in flat_text]
+    flat_text = " ".join("\n".join(pages_text).split())
+    missing_text = [item for item in expected_text(language) if item not in flat_text]
     if missing_text:
-        raise RuntimeError(f"Missing required text in generated PDF: {missing_text}")
+        raise RuntimeError(f"Missing required {language} PDF text: {missing_text}")
 
-    freelance_start = flat_text.index("Freelance Software Engineer")
-    founder_start = flat_text.index("Founder & Engineer")
-    if freelance_start >= founder_start:
-        raise RuntimeError("Founder experience must follow freelance experience")
-    if "Myrodex" in flat_text[freelance_start:founder_start]:
-        raise RuntimeError("Myrodex must not be listed under freelance experience")
-    if flat_text.find("Myrodex", founder_start) == -1:
-        raise RuntimeError("Myrodex must be listed under founder experience")
-    removed_text = [
-        "Open-Source Contributor / Maintainer | Trant Labs",
-        "Team Checkmate / Hackatum 2024",
-        "Upstream Mobile & Native Contributions",
-        "TECHNICAL WRITING",
-        "SELECTED ADDITIONAL PROJECTS",
-        "Curated from my own repository history",
-        "More repository history",
-        "commits.json",
-        "Spotify Playback SDK for Node.js",
-        "WhatsApp Operations Backend",
-        "Minecraft Server Admin Panel",
-        "cccb-servicepoint-browser",
-        "jura",
-        "gpia",
-        "GykiSpace",
-        "Lambert-server",
-        "Lambert-orm",
-        "Database-Browser",
-        "CAPTCHA",
-        "(private)",
-    ]
-    unexpected_text = [item for item in removed_text if item in flat_text]
+    unexpected_text = [item for item in REMOVED_TEXT if item in flat_text]
     if unexpected_text:
-        raise RuntimeError(f"Removed content is still present in the recruiter-facing CV: {unexpected_text}")
+        raise RuntimeError(f"Removed content is still present in the {language} CV: {unexpected_text}")
 
-    projects_start = flat_text.index("PROJECTS")
-    skills_start = flat_text.index("TECHNICAL SKILLS")
-    projects_text = flat_text[projects_start:skills_start]
-    if "present" in projects_text:
-        raise RuntimeError("Projects must use completion dates rather than open-ended date ranges")
-    ordered_titles = [project.title for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True)]
+    projects_heading = "PROJECTS" if language == "en" else "PROJEKTE"
+    skills_heading = "TECHNICAL SKILLS" if language == "en" else "TECHNISCHE FÄHIGKEITEN"
+    projects_text = flat_text[flat_text.index(projects_heading) : flat_text.index(skills_heading)]
+    open_ended_date = "present" if language == "en" else "heute"
+    if open_ended_date in projects_text:
+        raise RuntimeError(f"{language} project entries must not use open-ended date ranges")
+
+    ordered_titles = [tr(project.title, language) for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True)]
     positions = [projects_text.index(title) for title in ordered_titles]
     if positions != sorted(positions):
-        raise RuntimeError("Projects are not ordered chronologically, newest first")
+        raise RuntimeError(f"{language} projects are not ordered chronologically, newest first")
 
     uris = set()
     for page in reader.pages:
@@ -739,20 +850,16 @@ def verify_pdf(path: Path) -> None:
             action = annotation.get("/A")
             if action and action.get("/URI"):
                 uris.add(str(action["/URI"]))
+
     required_uris = {
         "mailto:contact@samuelscheit.com",
         "https://github.com/samuelscheit",
         "https://samuelscheit.com/github",
         "https://spacebar.chat",
         "https://github.com/respondchat",
-        "https://github.com/samuelscheit/discord-bot-client",
-        "https://github.com/samuelscheit/puppeteer-stream",
-        "https://github.com/samuelscheit/react-native-skia-list",
-        "https://phishing.support",
-        "https://github.com/samuelscheit/bundestagswahl2025",
-        "https://github.com/samuelscheit/fingerprinting",
-        "https://github.com/samuelscheit/wplace-archive",
-        "https://github.com/samuelscheit/spotify-drm-report",
+        "https://myrodex.gg",
+        "https://phont.ai",
+        "https://www.exodus.com",
     }
     required_uris.update(
         url
@@ -761,37 +868,50 @@ def verify_pdf(path: Path) -> None:
     )
     missing_uris = sorted(required_uris - uris)
     if missing_uris:
-        raise RuntimeError(f"Missing required hyperlinks: {missing_uris}")
+        raise RuntimeError(f"Missing required {language} hyperlinks: {missing_uris}")
 
 
-def build() -> Path:
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+def draw_footer(canvas, _document, language: Language) -> None:
+    canvas.saveState()
+    canvas.setStrokeColor(RULE)
+    canvas.setLineWidth(0.4)
+    canvas.line(LEFT_MARGIN, 9 * mm, PAGE_WIDTH - RIGHT_MARGIN, 9 * mm)
+    canvas.setFont("Helvetica", 8)
+    canvas.setFillColor(MUTED)
+    footer_title = tr(loc("Samuel Scheit - Curriculum Vitae", "Samuel Scheit - Lebenslauf"), language)
+    page_label = tr(loc("Page", "Seite"), language)
+    canvas.drawString(LEFT_MARGIN, 5.5 * mm, footer_title)
+    canvas.drawRightString(PAGE_WIDTH - RIGHT_MARGIN, 5.5 * mm, f"{page_label} {canvas.getPageNumber()}")
+    canvas.restoreState()
+
+
+def build(language: Language) -> Path:
+    output = OUTPUTS[language]
+    output.parent.mkdir(parents=True, exist_ok=True)
     document = SimpleDocTemplate(
-        str(OUTPUT),
+        str(output),
         pagesize=A4,
         leftMargin=LEFT_MARGIN,
         rightMargin=RIGHT_MARGIN,
         topMargin=15 * mm,
         bottomMargin=12 * mm,
-        title="Samuel Scheit - Curriculum Vitae",
+        title=tr(loc("Samuel Scheit - Curriculum Vitae", "Samuel Scheit - Lebenslauf"), language),
         author="Samuel Scheit",
-        subject="Software engineering curriculum vitae",
+        subject=tr(loc("Software engineering curriculum vitae", "Lebenslauf Softwareentwicklung"), language),
     )
-    def draw_footer(canvas, _document) -> None:
-        canvas.saveState()
-        canvas.setStrokeColor(RULE)
-        canvas.setLineWidth(0.4)
-        canvas.line(LEFT_MARGIN, 9 * mm, PAGE_WIDTH - RIGHT_MARGIN, 9 * mm)
-        canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(MUTED)
-        canvas.drawString(LEFT_MARGIN, 5.5 * mm, "Samuel Scheit - Curriculum Vitae")
-        canvas.drawRightString(PAGE_WIDTH - RIGHT_MARGIN, 5.5 * mm, f"Page {canvas.getPageNumber()}")
-        canvas.restoreState()
 
-    document.build(build_story(), onFirstPage=draw_footer, onLaterPages=draw_footer)
-    verify_pdf(OUTPUT)
-    return OUTPUT
+    def footer(canvas, document) -> None:
+        draw_footer(canvas, document, language)
+
+    document.build(build_story(language), onFirstPage=footer, onLaterPages=footer)
+    verify_pdf(output, language)
+    return output
+
+
+def build_all() -> dict[Language, Path]:
+    return {language: build(language) for language in ("en", "de")}
 
 
 if __name__ == "__main__":
-    print(build())
+    for language, output in build_all().items():
+        print(f"{language}: {output}")
