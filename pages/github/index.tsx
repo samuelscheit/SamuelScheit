@@ -211,7 +211,7 @@ export default function GitHubTimeline(props: InferGetStaticPropsType<typeof get
 						const { big: bigProjects, small: smallProjects } = projectsByYear[year];
 
 						return (
-							<TimelineItem key={year} date={year.toString()} title={`${year}`} titleStyle={{ color: "#ff7448" }}>
+							<TimelineItem key={year} date={year.toString()}>
 								<TimelineSection title="Projects" titleColor="#ff7448" show={bigProjects.length > 0}>
 									<div
 										style={{
