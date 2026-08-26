@@ -271,10 +271,6 @@ def build_story() -> list:
             "Freelance Software Engineer",
             "2025-2026",
             [
-                f"<b>{link('MyroDex', 'https://myrodex.gg')} (2026):</b> Built and delivered "
-                "MyroDex, a multi-tenant esports operations SaaS, end to end across customer and "
-                "back-office apps, organization RBAC, workflows, Stripe billing, background "
-                "workers, automated tests, and a production deployment workflow.",
                 f"<b>{link('PHONT', 'https://phont.ai')} (2025):</b> Re-engineered a WebGL/FFmpeg "
                 "video-export pipeline from real-time capture to deterministic frame-by-frame "
                 "rendering, improving export speed by up to <b>50x in project benchmarks</b>.",
@@ -286,10 +282,15 @@ def build_story() -> list:
             subtitle="Selected client engagements",
         ),
         entry(
-            f"Founder &amp; Engineer | {link('Spacebar Chat', 'https://spacebar.chat')}",
-            "Founded 2021",
+            "Founder &amp; Engineer",
+            "2021-present",
             [
-                "Founded Spacebar, a self-hostable, Discord-compatible chat, voice, and video "
+                f"<b>{link('Myrodex', 'https://myrodex.gg')} (2026):</b> Founded and built "
+                "a multi-tenant esports operations SaaS end to end across customer and back-office "
+                "apps, organization RBAC, workflows, Stripe billing, background workers, automated "
+                "tests, and a production deployment workflow.",
+                f"<b>{link('Spacebar Chat', 'https://spacebar.chat')} (2021):</b> Founded "
+                "a self-hostable, Discord-compatible chat, voice, and video "
                 "platform whose flagship repository reached <b>6.7k+ stars and 220+ forks</b>; "
                 "the ecosystem spans HTTP APIs, WebSocket/WebRTC, CDN/media delivery, data "
                 "models, administration tooling, and clients.",
@@ -365,6 +366,8 @@ def verify_pdf(path: Path) -> None:
     required_text = [
         "Samuel Scheit",
         "Freelance Software Engineer",
+        "Founder & Engineer",
+        "Myrodex",
         "Spacebar Chat",
         "Puppeteer Stream",
         "Additional projects and open-source contributions (50+)",
@@ -373,6 +376,15 @@ def verify_pdf(path: Path) -> None:
     missing_text = [item for item in required_text if item not in text]
     if missing_text:
         raise RuntimeError(f"Missing required text in generated PDF: {missing_text}")
+
+    freelance_start = text.index("Freelance Software Engineer")
+    founder_start = text.index("Founder & Engineer")
+    if freelance_start >= founder_start:
+        raise RuntimeError("Founder experience must follow freelance experience")
+    if "Myrodex" in text[freelance_start:founder_start]:
+        raise RuntimeError("Myrodex must not be listed under freelance experience")
+    if text.find("Myrodex", founder_start) == -1:
+        raise RuntimeError("Myrodex must be listed under founder experience")
 
     uris = set()
     for annotation_ref in page.get("/Annots", []):
