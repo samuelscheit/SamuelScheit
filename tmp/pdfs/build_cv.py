@@ -444,7 +444,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "missing-native-js-syntax",
         loc("Missing Native JS Syntax", "Missing Native JS Syntax"),
-        loc("Creator & Maintainer", "Ersteller & Betreuer"),
+        loc("Creator & Maintainer", "Ersteller"),
         loc("Jul 2023", "Juli 2023"),
         datetime(2023, 7, 28),
         (
@@ -495,7 +495,7 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
     PortfolioProject(
         "puppeteer-stream",
         loc("Puppeteer Stream", "Puppeteer Stream"),
-        loc("Creator & Maintainer", "Ersteller & Betreuer"),
+        loc("Creator & Maintainer", "Ersteller"),
         loc("Dec 2020", "Dez. 2020"),
         datetime(2020, 12, 22),
         (
@@ -558,12 +558,11 @@ PORTFOLIO_PROJECTS: tuple[PortfolioProject, ...] = (
 def portfolio_project_title(project: PortfolioProject, language: Language) -> str:
     details = github_project(project.repository)
     title = tr(project.title, language)
-    role = tr(project.role, language)
     if project.url_override:
-        return f"{link(title, project.url_override)} | {escape(role)}"
+        return link(title, project.url_override)
     if details.get("isPrivate"):
-        return f"{escape(title)} | {escape(role)}"
-    return f"{link(title, details['url'])} | {escape(role)}"
+        return escape(title)
+    return link(title, details["url"])
 
 
 def portfolio_project_url(project: PortfolioProject) -> str | None:
@@ -688,8 +687,7 @@ def build_story(language: Language) -> list:
         ),
         section(tr(loc("Projects", "Projekte"), language)),
         paragraph(
-            f"<b>{tr(loc('GitHub overview of all work:', 'GitHub-Übersicht aller Arbeiten:'), language)}</b> "
-            f"{link('samuelscheit.com/github', 'https://samuelscheit.com/github')}",
+            link("samuelscheit.com/github", "https://samuelscheit.com/github"),
             "subtitle",
         ),
         *portfolio_project_entries(language),
@@ -760,6 +758,8 @@ REMOVED_TEXT = (
     "GitHub release-asset",
     "across its ten published installers.",
     "JSX intrinsic-node surface",
+    "All projects below were solely created and engineered by me.",
+    "Alle unten aufgeführten Projekte wurden ausschließlich von mir konzipiert und entwickelt.",
 )
 
 
@@ -837,6 +837,8 @@ def verify_pdf(path: Path, language: Language) -> None:
     open_ended_date = "present" if language == "en" else "heute"
     if open_ended_date in projects_text:
         raise RuntimeError(f"{language} project entries must not use open-ended date ranges")
+    if "|" in projects_text:
+        raise RuntimeError(f"{language} project headings must not include role separators")
 
     ordered_titles = [tr(project.title, language) for project in sorted(PORTFOLIO_PROJECTS, key=lambda project: project.sort_date, reverse=True)]
     positions = [projects_text.index(title) for title in ordered_titles]
