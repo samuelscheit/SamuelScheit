@@ -254,7 +254,7 @@ def github_repositories() -> dict:
     if _GITHUB_DATA is not None:
         return _GITHUB_DATA
 
-    source = ROOT / "github/commits.json"
+    source = ROOT / "github/repositories.json"
     try:
         _GITHUB_DATA = json.loads(source.read_text(encoding="utf-8"))["repositories"]
     except FileNotFoundError as error:

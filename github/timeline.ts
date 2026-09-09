@@ -27,7 +27,7 @@ export type ProjectsByYear<TRepository extends TimelineRepository> = Record<
 	}
 >;
 
-function parseDate(value: string): Date | null {
+export function parseContributionDate(value: string): Date | null {
 	const date = new Date(value);
 	return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -52,14 +52,14 @@ export function shouldExcludeRepository(repository: TimelineRepository): boolean
  */
 export function getEarliestContributionDate(repository: TimelineRepository): Date {
 	const commitDates = repository.commits
-		.map((commit) => parseDate(commit.committedDate))
+		.map((commit) => parseContributionDate(commit.committedDate))
 		.filter((date): date is Date => date !== null);
 
 	if (commitDates.length > 0) {
 		return new Date(Math.min(...commitDates.map((date) => date.getTime())));
 	}
 
-	const createdAt = parseDate(repository.details.createdAt);
+	const createdAt = parseContributionDate(repository.details.createdAt);
 	if (!createdAt) {
 		throw new Error(`Repository ${repository.details.nameWithOwner} has no valid contribution or creation date.`);
 	}

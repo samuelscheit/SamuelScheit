@@ -1,0 +1,1720 @@
+{
+  "repositories": {
+    "samuelscheit/phishing.support": {
+      "details": {
+        "name": "phishing.support",
+        "url": "https://github.com/samuelscheit/phishing.support",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/react-native-skia-yoga": {
+      "details": {
+        "name": "react-native-skia-yoga",
+        "url": "https://github.com/samuelscheit/react-native-skia-yoga",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/Baileys": {
+      "details": {
+        "name": "Baileys",
+        "url": "https://github.com/samuelscheit/Baileys",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/wplace-archive": {
+      "details": {
+        "name": "wplace-archive",
+        "url": "https://github.com/samuelscheit/wplace-archive",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/wahllage": {
+      "details": {
+        "name": "wahllage",
+        "url": "https://github.com/samuelscheit/wahllage",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/holistische": {
+      "details": {
+        "name": "holistische",
+        "url": "https://github.com/samuelscheit/holistische",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "spencer005/harness": {
+      "details": {
+        "name": "harness",
+        "url": "https://github.com/spencer005/harness",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "spencer005"
+        }
+      }
+    },
+    "samuelscheit/corona": {
+      "details": {
+        "name": "corona",
+        "url": "https://github.com/samuelscheit/corona",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit2/fast-react": {
+      "details": {
+        "name": "fast-react",
+        "url": "https://github.com/samuelscheit2/fast-react",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit2"
+        }
+      }
+    },
+    "samuelscheit/spotify-drm-report": {
+      "details": {
+        "name": "spotify-drm-report",
+        "url": "https://github.com/samuelscheit/spotify-drm-report",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "spencer005/codex": {
+      "details": {
+        "name": "codex",
+        "url": "https://github.com/spencer005/codex",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "spencer005"
+        }
+      }
+    },
+    "samuelscheit/react-native-skia-list": {
+      "details": {
+        "name": "react-native-skia-list",
+        "url": "https://github.com/samuelscheit/react-native-skia-list",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/esim-automation": {
+      "details": {
+        "name": "esim-automation",
+        "url": "https://github.com/samuelscheit/esim-automation",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/search-engine": {
+      "details": {
+        "name": "search-engine",
+        "url": "https://github.com/samuelscheit/search-engine",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/prediction_arbitrage": {
+      "details": {
+        "name": "prediction_arbitrage",
+        "url": "https://github.com/samuelscheit/prediction_arbitrage",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/fingerprinting": {
+      "details": {
+        "name": "fingerprinting",
+        "url": "https://github.com/samuelscheit/fingerprinting",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/bundestagswahl2025": {
+      "details": {
+        "name": "bundestagswahl2025",
+        "url": "https://github.com/samuelscheit/bundestagswahl2025",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "GulfGulfinson/Open-WebUI-Adapter": {
+      "details": {
+        "name": "Open-WebUI-Adapter",
+        "url": "https://github.com/GulfGulfinson/Open-WebUI-Adapter",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "GulfGulfinson"
+        }
+      }
+    },
+    "samuelscheit/arbitrage_sportwetten": {
+      "details": {
+        "name": "arbitrage_sportwetten",
+        "url": "https://github.com/samuelscheit/arbitrage_sportwetten",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/LambertDB": {
+      "details": {
+        "name": "LambertDB",
+        "url": "https://github.com/samuelscheit/LambertDB",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/puppeteer-stream-webrtc": {
+      "details": {
+        "name": "puppeteer-stream-webrtc",
+        "url": "https://github.com/samuelscheit/puppeteer-stream-webrtc",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "myrodex/myrodex": {
+      "details": {
+        "name": "myrodex",
+        "url": "https://github.com/myrodex/myrodex",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "myrodex"
+        }
+      }
+    },
+    "samuelscheit/puppeteer-stream-webgl": {
+      "details": {
+        "name": "puppeteer-stream-webgl",
+        "url": "https://github.com/samuelscheit/puppeteer-stream-webgl",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/whatsapp": {
+      "details": {
+        "name": "whatsapp",
+        "url": "https://github.com/samuelscheit/whatsapp",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/media-archive": {
+      "details": {
+        "name": "media-archive",
+        "url": "https://github.com/samuelscheit/media-archive",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/jura": {
+      "details": {
+        "name": "jura",
+        "url": "https://github.com/samuelscheit/jura",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/auswertung-regierungspolitik": {
+      "details": {
+        "name": "auswertung-regierungspolitik",
+        "url": "https://github.com/samuelscheit/auswertung-regierungspolitik",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/tagesschau": {
+      "details": {
+        "name": "tagesschau",
+        "url": "https://github.com/samuelscheit/tagesschau",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/recaptcha": {
+      "details": {
+        "name": "recaptcha",
+        "url": "https://github.com/samuelscheit/recaptcha",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "myrodex/revamp": {
+      "details": {
+        "name": "revamp",
+        "url": "https://github.com/myrodex/revamp",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "myrodex"
+        }
+      }
+    },
+    "samuelscheit/expo-desktop-app": {
+      "details": {
+        "name": "expo-desktop-app",
+        "url": "https://github.com/samuelscheit/expo-desktop-app",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "xnacly/steelray": {
+      "details": {
+        "name": "steelray",
+        "url": "https://github.com/xnacly/steelray",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "xnacly"
+        }
+      }
+    },
+    "xnacly/sqleibniz": {
+      "details": {
+        "name": "sqleibniz",
+        "url": "https://github.com/xnacly/sqleibniz",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "xnacly"
+        }
+      }
+    },
+    "samuelscheit/puppeteer-stream": {
+      "details": {
+        "name": "puppeteer-stream",
+        "url": "https://github.com/samuelscheit/puppeteer-stream",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "xnacly/purple-garden": {
+      "details": {
+        "name": "purple-garden",
+        "url": "https://github.com/xnacly/purple-garden",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "xnacly"
+        }
+      }
+    },
+    "myrodex/Website": {
+      "details": {
+        "name": "Website",
+        "url": "https://github.com/myrodex/Website",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "myrodex"
+        }
+      }
+    },
+    "samuelscheit/npm-malicious-check": {
+      "details": {
+        "name": "npm-malicious-check",
+        "url": "https://github.com/samuelscheit/npm-malicious-check",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/missing-native-js-syntax": {
+      "details": {
+        "name": "missing-native-js-syntax",
+        "url": "https://github.com/samuelscheit/missing-native-js-syntax",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/vocab": {
+      "details": {
+        "name": "vocab",
+        "url": "https://github.com/samuelscheit/vocab",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "spencer005/lockbox": {
+      "details": {
+        "name": "lockbox",
+        "url": "https://github.com/spencer005/lockbox",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "spencer005"
+        }
+      }
+    },
+    "respondchat/react-native-fast-markdown": {
+      "details": {
+        "name": "react-native-fast-markdown",
+        "url": "https://github.com/respondchat/react-native-fast-markdown",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "samuelscheit/Lambert-server": {
+      "details": {
+        "name": "Lambert-server",
+        "url": "https://github.com/samuelscheit/Lambert-server",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "respondchat/libsignal": {
+      "details": {
+        "name": "libsignal",
+        "url": "https://github.com/respondchat/libsignal",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "samuelscheit/samsung-frame-connect": {
+      "details": {
+        "name": "samsung-frame-connect",
+        "url": "https://github.com/samuelscheit/samsung-frame-connect",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/formdocs": {
+      "details": {
+        "name": "formdocs",
+        "url": "https://github.com/samuelscheit/formdocs",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "respondchat/jsi-rs": {
+      "details": {
+        "name": "jsi-rs",
+        "url": "https://github.com/respondchat/jsi-rs",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "samuelscheit/cccb-servicepoint-browser": {
+      "details": {
+        "name": "cccb-servicepoint-browser",
+        "url": "https://github.com/samuelscheit/cccb-servicepoint-browser",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "OP-Engineering/op-sqlite": {
+      "details": {
+        "name": "op-sqlite",
+        "url": "https://github.com/OP-Engineering/op-sqlite",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "OP-Engineering"
+        }
+      }
+    },
+    "cccb/servicepoint": {
+      "details": {
+        "name": "servicepoint",
+        "url": "https://github.com/cccb/servicepoint",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "cccb"
+        }
+      }
+    },
+    "respondchat/faster-mobx": {
+      "details": {
+        "name": "faster-mobx",
+        "url": "https://github.com/respondchat/faster-mobx",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "LinusU/react-native-get-random-values": {
+      "details": {
+        "name": "react-native-get-random-values",
+        "url": "https://github.com/LinusU/react-native-get-random-values",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "LinusU"
+        }
+      }
+    },
+    "samuelscheit/yuv": {
+      "details": {
+        "name": "yuv",
+        "url": "https://github.com/samuelscheit/yuv",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "oblador/react-native-keychain": {
+      "details": {
+        "name": "react-native-keychain",
+        "url": "https://github.com/oblador/react-native-keychain",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "oblador"
+        }
+      }
+    },
+    "raygaeta/webgl-demo-primary": {
+      "details": {
+        "name": "webgl-demo-primary",
+        "url": "https://github.com/raygaeta/webgl-demo-primary",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "raygaeta"
+        }
+      }
+    },
+    "discord-userdoccers/discord-protos": {
+      "details": {
+        "name": "discord-protos",
+        "url": "https://github.com/discord-userdoccers/discord-protos",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "discord-userdoccers"
+        }
+      }
+    },
+    "xnacly/gtk-hello-world": {
+      "details": {
+        "name": "gtk-hello-world",
+        "url": "https://github.com/xnacly/gtk-hello-world",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "xnacly"
+        }
+      }
+    },
+    "auto-place/auto-place": {
+      "details": {
+        "name": "auto-place",
+        "url": "https://github.com/auto-place/auto-place",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "auto-place"
+        }
+      }
+    },
+    "samuelscheit/gyki-app": {
+      "details": {
+        "name": "gyki-app",
+        "url": "https://github.com/samuelscheit/gyki-app",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/react-native-spline": {
+      "details": {
+        "name": "react-native-spline",
+        "url": "https://github.com/samuelscheit/react-native-spline",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/discord-bots": {
+      "details": {
+        "name": "discord-bots",
+        "url": "https://github.com/samuelscheit/discord-bots",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/hackatum2025": {
+      "details": {
+        "name": "hackatum2025",
+        "url": "https://github.com/samuelscheit/hackatum2025",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/react-cve": {
+      "details": {
+        "name": "react-cve",
+        "url": "https://github.com/samuelscheit/react-cve",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/hackatum-2024": {
+      "details": {
+        "name": "hackatum-2024",
+        "url": "https://github.com/samuelscheit/hackatum-2024",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "Auties00/whatsapprestapi": {
+      "details": {
+        "name": "whatsapprestapi",
+        "url": "https://github.com/Auties00/whatsapprestapi",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Auties00"
+        }
+      }
+    },
+    "respondchat/libsignal-protocol-typescript": {
+      "details": {
+        "name": "libsignal-protocol-typescript",
+        "url": "https://github.com/respondchat/libsignal-protocol-typescript",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "xnacly/heimdall": {
+      "details": {
+        "name": "heimdall",
+        "url": "https://github.com/xnacly/heimdall",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "xnacly"
+        }
+      }
+    },
+    "Auties00/whatsapp-api": {
+      "details": {
+        "name": "whatsapp-api",
+        "url": "https://github.com/Auties00/whatsapp-api",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Auties00"
+        }
+      }
+    },
+    "samuelscheit/baileys-fix": {
+      "details": {
+        "name": "baileys-fix",
+        "url": "https://github.com/samuelscheit/baileys-fix",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "servlicense/servlicense": {
+      "details": {
+        "name": "servlicense",
+        "url": "https://github.com/servlicense/servlicense",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "servlicense"
+        }
+      }
+    },
+    "PHONT-Studio/Phont-frontend": {
+      "details": {
+        "name": "Phont-frontend",
+        "url": "https://github.com/PHONT-Studio/Phont-frontend",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "PHONT-Studio"
+        }
+      }
+    },
+    "samuelscheit/university": {
+      "details": {
+        "name": "university",
+        "url": "https://github.com/samuelscheit/university",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "respondchat/libsignal-protocol-protobuf-ts": {
+      "details": {
+        "name": "libsignal-protocol-protobuf-ts",
+        "url": "https://github.com/respondchat/libsignal-protocol-protobuf-ts",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "langchain-ai/langchainjs": {
+      "details": {
+        "name": "langchainjs",
+        "url": "https://github.com/langchain-ai/langchainjs",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "langchain-ai"
+        }
+      }
+    },
+    "nodepush/lib": {
+      "details": {
+        "name": "lib",
+        "url": "https://github.com/nodepush/lib",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "nodepush"
+        }
+      }
+    },
+    "trantlabs/missing-native-js-functions": {
+      "details": {
+        "name": "missing-native-js-functions",
+        "url": "https://github.com/trantlabs/missing-native-js-functions",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "trantlabs"
+        }
+      }
+    },
+    "respondchat/beta-api": {
+      "details": {
+        "name": "beta-api",
+        "url": "https://github.com/respondchat/beta-api",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "dominicstop/react-native-ios-utilities": {
+      "details": {
+        "name": "react-native-ios-utilities",
+        "url": "https://github.com/dominicstop/react-native-ios-utilities",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "dominicstop"
+        }
+      }
+    },
+    "samuelscheit/discord-bot-client": {
+      "details": {
+        "name": "discord-bot-client",
+        "url": "https://github.com/samuelscheit/discord-bot-client",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "respondchat/react-native-fast-markdown-archived": {
+      "details": {
+        "name": "react-native-fast-markdown-archived",
+        "url": "https://github.com/respondchat/react-native-fast-markdown-archived",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "surrealdb/surrealdb.js": {
+      "details": {
+        "name": "surrealdb.js",
+        "url": "https://github.com/surrealdb/surrealdb.js",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "surrealdb"
+        }
+      }
+    },
+    "samuelscheit/gpia": {
+      "details": {
+        "name": "gpia",
+        "url": "https://github.com/samuelscheit/gpia",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "respondchat/c-go-interop": {
+      "details": {
+        "name": "c-go-interop",
+        "url": "https://github.com/respondchat/c-go-interop",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "laptou/jsi-rs": {
+      "details": {
+        "name": "jsi-rs",
+        "url": "https://github.com/laptou/jsi-rs",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "laptou"
+        }
+      }
+    },
+    "xnacly/blog": {
+      "details": {
+        "name": "blog",
+        "url": "https://github.com/xnacly/blog",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "xnacly"
+        }
+      }
+    },
+    "samuelscheit/Lambert-orm": {
+      "details": {
+        "name": "Lambert-orm",
+        "url": "https://github.com/samuelscheit/Lambert-orm",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "trantlabs/trant-analytics": {
+      "details": {
+        "name": "trant-analytics",
+        "url": "https://github.com/trantlabs/trant-analytics",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "trantlabs"
+        }
+      }
+    },
+    "surrealdb/docs.surrealdb.com": {
+      "details": {
+        "name": "docs.surrealdb.com",
+        "url": "https://github.com/surrealdb/docs.surrealdb.com",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "surrealdb"
+        }
+      }
+    },
+    "WhiskeySockets/Baileys": {
+      "details": {
+        "name": "Baileys",
+        "url": "https://github.com/WhiskeySockets/Baileys",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "WhiskeySockets"
+        }
+      }
+    },
+    "respondchat/internal": {
+      "details": {
+        "name": "internal",
+        "url": "https://github.com/respondchat/internal",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "samuelscheit/js-decompiler": {
+      "details": {
+        "name": "js-decompiler",
+        "url": "https://github.com/samuelscheit/js-decompiler",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "trantlabs/status": {
+      "details": {
+        "name": "status",
+        "url": "https://github.com/trantlabs/status",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "trantlabs"
+        }
+      }
+    },
+    "trantlabs/trant-forum": {
+      "details": {
+        "name": "trant-forum",
+        "url": "https://github.com/trantlabs/trant-forum",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "trantlabs"
+        }
+      }
+    },
+    "Stefan080106/smartpraemie_backend": {
+      "details": {
+        "name": "smartpraemie_backend",
+        "url": "https://github.com/Stefan080106/smartpraemie_backend",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Stefan080106"
+        }
+      }
+    },
+    "samuelscheit/xlang": {
+      "details": {
+        "name": "xlang",
+        "url": "https://github.com/samuelscheit/xlang",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "respondchat/hermes": {
+      "details": {
+        "name": "hermes",
+        "url": "https://github.com/respondchat/hermes",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "respondchat/Signal-Desktop": {
+      "details": {
+        "name": "Signal-Desktop",
+        "url": "https://github.com/respondchat/Signal-Desktop",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "spacebarchat/docs": {
+      "details": {
+        "name": "docs",
+        "url": "https://github.com/spacebarchat/docs",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "Echt-lang/doc": {
+      "details": {
+        "name": "doc",
+        "url": "https://github.com/Echt-lang/doc",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Echt-lang"
+        }
+      }
+    },
+    "Alarmi-2/Frontend": {
+      "details": {
+        "name": "Frontend",
+        "url": "https://github.com/Alarmi-2/Frontend",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Alarmi-2"
+        }
+      }
+    },
+    "Echt-lang/temp-interpreter": {
+      "details": {
+        "name": "temp-interpreter",
+        "url": "https://github.com/Echt-lang/temp-interpreter",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Echt-lang"
+        }
+      }
+    },
+    "respondchat/react-native-libsignal": {
+      "details": {
+        "name": "react-native-libsignal",
+        "url": "https://github.com/respondchat/react-native-libsignal",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "Stefan080106/derAutoBerater_PostTransfer": {
+      "details": {
+        "name": "derAutoBerater_PostTransfer",
+        "url": "https://github.com/Stefan080106/derAutoBerater_PostTransfer",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Stefan080106"
+        }
+      }
+    },
+    "spacebarchat/landingpage": {
+      "details": {
+        "name": "landingpage",
+        "url": "https://github.com/spacebarchat/landingpage",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "purpshell/apns-client": {
+      "details": {
+        "name": "apns-client",
+        "url": "https://github.com/purpshell/apns-client",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "purpshell"
+        }
+      }
+    },
+    "x127f/image-manipulation-api": {
+      "details": {
+        "name": "image-manipulation-api",
+        "url": "https://github.com/x127f/image-manipulation-api",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "x127f"
+        }
+      }
+    },
+    "dominicstop/react-native-ios-context-menu": {
+      "details": {
+        "name": "react-native-ios-context-menu",
+        "url": "https://github.com/dominicstop/react-native-ios-context-menu",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "dominicstop"
+        }
+      }
+    },
+    "samuelscheit/carcassonne-ai": {
+      "details": {
+        "name": "carcassonne-ai",
+        "url": "https://github.com/samuelscheit/carcassonne-ai",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "zek/whatsapp-client": {
+      "details": {
+        "name": "whatsapp-client",
+        "url": "https://github.com/zek/whatsapp-client",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "zek"
+        }
+      }
+    },
+    "trantlabs/eslint-config": {
+      "details": {
+        "name": "eslint-config",
+        "url": "https://github.com/trantlabs/eslint-config",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "trantlabs"
+        }
+      }
+    },
+    "Trenite/TrenitePrivate": {
+      "details": {
+        "name": "TrenitePrivate",
+        "url": "https://github.com/Trenite/TrenitePrivate",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Trenite"
+        }
+      }
+    },
+    "Trenite/extra": {
+      "details": {
+        "name": "extra",
+        "url": "https://github.com/Trenite/extra",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Trenite"
+        }
+      }
+    },
+    "trantlabs/beta-manager": {
+      "details": {
+        "name": "beta-manager",
+        "url": "https://github.com/trantlabs/beta-manager",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "trantlabs"
+        }
+      }
+    },
+    "Trenite/Trenite": {
+      "details": {
+        "name": "Trenite",
+        "url": "https://github.com/Trenite/Trenite",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "Trenite"
+        }
+      }
+    },
+    "Shopify/react-native-skia": {
+      "details": {
+        "name": "react-native-skia",
+        "url": "https://github.com/Shopify/react-native-skia",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "Shopify"
+        }
+      }
+    },
+    "trantlabs/emoji-mashup": {
+      "details": {
+        "name": "emoji-mashup",
+        "url": "https://github.com/trantlabs/emoji-mashup",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "trantlabs"
+        }
+      }
+    },
+    "medooze/semantic-sdp-js": {
+      "details": {
+        "name": "semantic-sdp-js",
+        "url": "https://github.com/medooze/semantic-sdp-js",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "medooze"
+        }
+      }
+    },
+    "spacebarchat/fosscord-ui": {
+      "details": {
+        "name": "fosscord-ui",
+        "url": "https://github.com/spacebarchat/fosscord-ui",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "spacebarchat/spacebarchat": {
+      "details": {
+        "name": "spacebarchat",
+        "url": "https://github.com/spacebarchat/spacebarchat",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "samuelscheit/PokemonGame": {
+      "details": {
+        "name": "PokemonGame",
+        "url": "https://github.com/samuelscheit/PokemonGame",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "spacebarchat/voice-gateway": {
+      "details": {
+        "name": "voice-gateway",
+        "url": "https://github.com/spacebarchat/voice-gateway",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "x127f/spotify-user-utils": {
+      "details": {
+        "name": "spotify-user-utils",
+        "url": "https://github.com/x127f/spotify-user-utils",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "x127f"
+        }
+      }
+    },
+    "spacebarchat/community-instances": {
+      "details": {
+        "name": "community-instances",
+        "url": "https://github.com/spacebarchat/community-instances",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "Trenite/Lambert-discord": {
+      "details": {
+        "name": "Lambert-discord",
+        "url": "https://github.com/Trenite/Lambert-discord",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "Trenite"
+        }
+      }
+    },
+    "x127f/timetable-generator": {
+      "details": {
+        "name": "timetable-generator",
+        "url": "https://github.com/x127f/timetable-generator",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "x127f"
+        }
+      }
+    },
+    "samuelscheit/GykiSpace": {
+      "details": {
+        "name": "GykiSpace",
+        "url": "https://github.com/samuelscheit/GykiSpace",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "spacebarchat/.github": {
+      "details": {
+        "name": ".github",
+        "url": "https://github.com/spacebarchat/.github",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "spacebarchat/spacebar-bots": {
+      "details": {
+        "name": "spacebar-bots",
+        "url": "https://github.com/spacebarchat/spacebar-bots",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "spacebarchat/fosscord-web-client": {
+      "details": {
+        "name": "fosscord-web-client",
+        "url": "https://github.com/spacebarchat/fosscord-web-client",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "Trenite/Lambert-gateway": {
+      "details": {
+        "name": "Lambert-gateway",
+        "url": "https://github.com/Trenite/Lambert-gateway",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "Trenite"
+        }
+      }
+    },
+    "samuelscheit/gykivideo": {
+      "details": {
+        "name": "gykivideo",
+        "url": "https://github.com/samuelscheit/gykivideo",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "spacebarchat/themes": {
+      "details": {
+        "name": "themes",
+        "url": "https://github.com/spacebarchat/themes",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "samuelscheit/text-to-handwriting": {
+      "details": {
+        "name": "text-to-handwriting",
+        "url": "https://github.com/samuelscheit/text-to-handwriting",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/paper.io": {
+      "details": {
+        "name": "paper.io",
+        "url": "https://github.com/samuelscheit/paper.io",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/snake": {
+      "details": {
+        "name": "snake",
+        "url": "https://github.com/samuelscheit/snake",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/sorting-algorithms": {
+      "details": {
+        "name": "sorting-algorithms",
+        "url": "https://github.com/samuelscheit/sorting-algorithms",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/minecraft-server-admin-panel": {
+      "details": {
+        "name": "minecraft-server-admin-panel",
+        "url": "https://github.com/samuelscheit/minecraft-server-admin-panel",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/spotify-playback-sdk-node": {
+      "details": {
+        "name": "spotify-playback-sdk-node",
+        "url": "https://github.com/samuelscheit/spotify-playback-sdk-node",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/GxdAim": {
+      "details": {
+        "name": "GxdAim",
+        "url": "https://github.com/samuelscheit/GxdAim",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/TankGame": {
+      "details": {
+        "name": "TankGame",
+        "url": "https://github.com/samuelscheit/TankGame",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "xnacly/tokenchecker-website": {
+      "details": {
+        "name": "tokenchecker-website",
+        "url": "https://github.com/xnacly/tokenchecker-website",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "xnacly"
+        }
+      }
+    },
+    "samuelscheit/Database-Browser": {
+      "details": {
+        "name": "Database-Browser",
+        "url": "https://github.com/samuelscheit/Database-Browser",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/iplogger": {
+      "details": {
+        "name": "iplogger",
+        "url": "https://github.com/samuelscheit/iplogger",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "E-Edu/frontend": {
+      "details": {
+        "name": "frontend",
+        "url": "https://github.com/E-Edu/frontend",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "E-Edu"
+        }
+      }
+    },
+    "Trenite/fn-api.de": {
+      "details": {
+        "name": "fn-api.de",
+        "url": "https://github.com/Trenite/fn-api.de",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Trenite"
+        }
+      }
+    },
+    "aramodi/limitcord-firefox": {
+      "details": {
+        "name": "limitcord-firefox",
+        "url": "https://github.com/aramodi/limitcord-firefox",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "aramodi"
+        }
+      }
+    },
+    "discordjs/Commando": {
+      "details": {
+        "name": "Commando",
+        "url": "https://github.com/discordjs/Commando",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "discordjs"
+        }
+      }
+    },
+    "Trenite/bots.trenite.tk": {
+      "details": {
+        "name": "bots.trenite.tk",
+        "url": "https://github.com/Trenite/bots.trenite.tk",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "Trenite"
+        }
+      }
+    },
+    "x127f/Odium-DEPRECATED": {
+      "details": {
+        "name": "Odium-DEPRECATED",
+        "url": "https://github.com/x127f/Odium-DEPRECATED",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "x127f"
+        }
+      }
+    },
+    "react-native-webview/react-native-webview": {
+      "details": {
+        "name": "react-native-webview",
+        "url": "https://github.com/react-native-webview/react-native-webview",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "react-native-webview"
+        }
+      }
+    },
+    "x127f/Clickbot": {
+      "details": {
+        "name": "Clickbot",
+        "url": "https://github.com/x127f/Clickbot",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "x127f"
+        }
+      }
+    },
+    "samuelscheit/GyKi-Analytics": {
+      "details": {
+        "name": "GyKi-Analytics",
+        "url": "https://github.com/samuelscheit/GyKi-Analytics",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/Gitarre": {
+      "details": {
+        "name": "Gitarre",
+        "url": "https://github.com/samuelscheit/Gitarre",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "samuelscheit/Tabletklasse": {
+      "details": {
+        "name": "Tabletklasse",
+        "url": "https://github.com/samuelscheit/Tabletklasse",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "samuelscheit"
+        }
+      }
+    },
+    "respondchat/respond": {
+      "details": {
+        "name": "respond",
+        "url": "https://github.com/respondchat/respond",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "respondchat"
+        }
+      }
+    },
+    "spacebarchat/server-ghsa-jcq4-2jc6-cxw7": {
+      "details": {
+        "name": "server-ghsa-jcq4-2jc6-cxw7",
+        "url": "https://github.com/spacebarchat/server-ghsa-jcq4-2jc6-cxw7",
+        "isPrivate": true,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    },
+    "spacebarchat/server": {
+      "details": {
+        "name": "server",
+        "url": "https://github.com/spacebarchat/server",
+        "isPrivate": false,
+        "isFork": false,
+        "owner": {
+          "login": "spacebarchat"
+        }
+      }
+    }
+  }
+}

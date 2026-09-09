@@ -32,9 +32,7 @@
 		"start": "next start",
 		"lint": "next lint",
 		"screenshot": "node screenshot.js",
-		"github:download": "node github/download.ts",
-		"github:update-details": "node github/download.ts --update-details",
-		"github:skip-discovery": "node github/download.ts --skip-discovery"
+		"github:download": "bun github/download.ts"
 	},
 	"devDependencies": {
 		"@octokit/core": "7.0.6",

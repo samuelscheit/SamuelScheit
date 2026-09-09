@@ -5,6 +5,7 @@ export function Timeline(props: React.DetailedHTMLProps<React.HTMLAttributes<HTM
 	const trackRef = useRef<HTMLDivElement>(null);
 	const shadowTopRef = useRef<HTMLDivElement>(null);
 	const shadowBottomRef = useRef<HTMLDivElement>(null);
+	const { children, className, style, ...sectionProps } = props;
 
 	useEffect(() => {
 		const section = sectionRef.current;
@@ -42,14 +43,19 @@ export function Timeline(props: React.DetailedHTMLProps<React.HTMLAttributes<HTM
 	}, []);
 
 	return (
-		<section ref={sectionRef} style={{ zIndex: 0 }} {...props} className="timeline">
+		<section
+			ref={sectionRef}
+			{...sectionProps}
+			style={{ zIndex: 0, ...style }}
+			className={["timeline", className].filter(Boolean).join(" ")}
+		>
 			<div className="bar">
 				<div className="overlay-fade-top" />
 				<div ref={trackRef} className="track"></div>
 				<div className="overlay-fade-bottom" />
 			</div>
 			<div ref={shadowTopRef} className="shadow-top" />
-			{props.children}
+			{children}
 			<div ref={shadowBottomRef} className="shadow-bottom" />
 		</section>
 	);

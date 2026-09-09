@@ -7,6 +7,7 @@ import "../components/contact.scss";
 import "../components/projects.scss";
 import "../components/timeline.scss";
 import "../components/blog.scss";
+import "../styles/github-timeline.css";
 
 import type { AppProps } from "next/app";
 

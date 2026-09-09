@@ -1,15 +1,25 @@
-// file: contributed-repos.js
-import fetch from "node-fetch";
+import * as fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 import cliProgress from "cli-progress";
 import PQueue from "p-queue";
+import {
+	createGitHubRepositoryMetadata,
+	createGitHubTimelinePageData,
+	type GitHubCommit,
+	type GitHubExport,
+	type GitHubRepositoryDetails,
+} from "./page-data";
 
 config();
 
 const TOKEN = process.env.GH_TOKEN;
 const CLI_LOGIN = process.argv.slice(2).find((argument) => !argument.startsWith("-"));
 const LOGIN = process.env.GITHUB_LOGIN || CLI_LOGIN || "samuelscheit";
-const OUTPUT_FILE = `${__dirname}/commits.json`;
+const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
+const TIMELINE_OUTPUT_FILE = path.join(SCRIPT_DIRECTORY, "timeline.json");
+const REPOSITORIES_OUTPUT_FILE = path.join(SCRIPT_DIRECTORY, "repositories.json");
 
 const EXCLUDED_REPOS = [
 	"respondchat/assets",
@@ -45,96 +55,8 @@ function isExcludedRepository(repository: string): boolean {
 	return EXCLUDED_REPO_KEYS.has(repository.toLowerCase()) || EXCLUDED_ORGS.has(owner.toLowerCase());
 }
 
-// TypeScript interfaces for GraphQL responses
 interface Repository {
 	nameWithOwner: string;
-}
-
-interface RepositoryDetails {
-	id: string;
-	name: string;
-	nameWithOwner: string;
-	description: string | null;
-	url: string;
-	homepageUrl: string | null;
-	createdAt: string;
-	updatedAt: string;
-	pushedAt: string;
-	isPrivate: boolean;
-	isFork: boolean;
-	isArchived: boolean;
-	isDisabled: boolean;
-	isTemplate: boolean;
-	isLocked: boolean;
-	hasIssuesEnabled: boolean;
-	hasWikiEnabled: boolean;
-	hasDiscussionsEnabled: boolean;
-	forkCount: number;
-	stargazerCount: number;
-	watchers: {
-		totalCount: number;
-	};
-	primaryLanguage: {
-		name: string;
-		color: string;
-	} | null;
-	languages: {
-		edges: Array<{
-			size: number;
-			node: {
-				name: string;
-				color: string;
-			};
-		}>;
-	};
-	licenseInfo: {
-		name: string;
-		spdxId: string;
-		url: string;
-	} | null;
-	owner: {
-		login: string;
-		avatarUrl: string;
-	};
-	repositoryTopics: {
-		nodes: Array<{
-			topic: {
-				name: string;
-			};
-		}>;
-	};
-	defaultBranchRef: {
-		name: string;
-		target: {
-			history: {
-				totalCount: number;
-			};
-		} | null;
-	} | null;
-	openGraphImageUrl: string | null;
-	readme: {
-		text: string;
-	} | null;
-	pullRequests: {
-		totalCount: number;
-		nodes: Array<{
-			id: string;
-			title: string;
-			url: string;
-			state: string;
-			createdAt: string;
-			updatedAt: string;
-			closedAt: string | null;
-			mergedAt: string | null;
-			number: number;
-			body: string | null;
-			headRefName: string;
-			baseRefName: string;
-			author: {
-				login: string;
-			} | null;
-		}>;
-	};
 }
 
 interface YearsData {
@@ -218,7 +140,7 @@ const commitsByRefQuery = `
   }`;
 
 const repositoryDetailsQuery = `
-  query ($owner: String!, $name: String!, $searchQuery: String!) {
+  query ($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
       id
       name
@@ -227,88 +149,18 @@ const repositoryDetailsQuery = `
       url
       homepageUrl
       createdAt
-      updatedAt
-      pushedAt
       isPrivate
       isFork
-      isArchived
-      isDisabled
-      isTemplate
-      isLocked
-      hasIssuesEnabled
-      hasWikiEnabled
-      hasDiscussionsEnabled
       forkCount
       stargazerCount
-      watchers {
-        totalCount
-      }
       primaryLanguage {
         name
         color
       }
-      languages(first: 10) {
-        edges {
-          size
-          node {
-            name
-            color
-          }
-        }
-      }
-      licenseInfo {
-        name
-        spdxId
-        url
-      }
       owner {
         login
-        avatarUrl
-      }
-      repositoryTopics(first: 20) {
-        nodes {
-          topic {
-            name
-          }
-        }
-      }
-      defaultBranchRef {
-        name
-        target {
-          ... on Commit {
-            history {
-              totalCount
-            }
-          }
-        }
       }
       openGraphImageUrl
-      readme: object(expression: "HEAD:README.md") {
-        ... on Blob {
-          text
-        }
-      }
-    }
-    pullRequests: search(type: ISSUE, first: 100, query: $searchQuery) {
-      nodes {
-        ... on PullRequest {
-          id
-          title
-          url
-          state
-          createdAt
-          updatedAt
-          closedAt
-          mergedAt
-          number
-          body
-          headRefName
-          baseRefName
-          author {
-            login
-          }
-        }
-      }
     }
   }`;
 
@@ -365,37 +217,18 @@ export async function ghRequest(query: string, variables: Record<string, any>, r
 	}
 }
 
-export async function fetchRepositoryDetails(
-	owner: string,
-	name: string,
-	author: string,
-): Promise<{ details: RepositoryDetails | null; pullRequests: any[] }> {
+export async function fetchRepositoryDetails(owner: string, name: string): Promise<GitHubRepositoryDetails | null> {
 	try {
-		const searchQuery = `repo:${owner}/${name} type:pr author:${author}`;
-		const data = await ghRequest(repositoryDetailsQuery, { owner, name, searchQuery });
-		return {
-			details: data.repository,
-			pullRequests: data.pullRequests?.nodes || [],
-		};
+		const data = await ghRequest(repositoryDetailsQuery, { owner, name });
+		return data.repository;
 	} catch (error) {
 		console.log(`⚠️  Failed to fetch repository details for ${owner}/${name}:`, error);
-		return {
-			details: null,
-			pullRequests: [],
-		};
+		return null;
 	}
 }
 
 export async function fetchCommits(owner: string, name: string, authorId: string, progressBar?: cliProgress.SingleBar) {
-	const commitsMap = new Map<
-		string,
-		{
-			oid: string;
-			messageHeadline: string;
-			committedDate: string;
-			refs: string[];
-		}
-	>();
+	const commitsMap = new Map<string, GitHubCommit>();
 
 	let totalCommits = 0;
 	let processedRefs = 0;
@@ -444,19 +277,11 @@ export async function fetchCommits(owner: string, name: string, authorId: string
 			if (history.edges) {
 				history.edges.forEach((e: any) => {
 					const { oid, messageHeadline, committedDate } = e.node;
-					if (commitsMap.has(oid)) {
-						// Commit already exists, just add the ref if it's not already there
-						const existing = commitsMap.get(oid)!;
-						if (!existing.refs.includes(refName)) {
-							existing.refs.push(refName);
-						}
-					} else {
-						// New commit, add it to the map
+					if (!commitsMap.has(oid)) {
 						commitsMap.set(oid, {
 							oid,
 							messageHeadline,
 							committedDate,
-							refs: [refName],
 						});
 						totalCommits++;
 						refCommits++;
@@ -481,13 +306,7 @@ export async function fetchCommits(owner: string, name: string, authorId: string
 		}
 	}
 
-	// Convert map to array format
-	return Array.from(commitsMap.values()).map((commit) => ({
-		oid: commit.oid,
-		messageHeadline: commit.messageHeadline,
-		committedDate: commit.committedDate,
-		refs: commit.refs,
-	}));
+	return Array.from(commitsMap.values());
 }
 
 function isForbiddenError(error: unknown): boolean {
@@ -538,61 +357,36 @@ export async function fetchReposForWindow(login: string, from: Date, to: Date, o
 	await fetchReposForWindow(login, midpoint, to, out);
 }
 
-export async function downloadAllRepos(
-	options: {
-		updateDetailsOnly?: boolean;
-		skipRepoDiscovery?: boolean;
-	} = {},
-): Promise<void> {
+export async function downloadAllRepos(): Promise<void> {
 	if (!TOKEN || !LOGIN) {
-		console.error("Usage: GH_TOKEN=token bun github/download.ts <github_login>");
-		process.exit(1);
+		throw new Error("Usage: GH_TOKEN=token bun github/download.ts <github_login>");
 	}
 
 	// 1. Which years actually contain contributions?
 	const yearsData: YearsData = await ghRequest(yearsQuery, { login: LOGIN });
 	const years = yearsData.user.contributionsCollection.contributionYears;
 	const userId = yearsData.user.id;
-	if (!years.length) return console.log("No contributions found.");
+	if (!years.length) {
+		console.log("No contributions found.");
+		return;
+	}
 
 	const repos = new Set<string>();
 
 	// 2. Discover every contribution year. A forbidden organization only makes
 	// its own bisection branch inaccessible; all other windows remain usable.
-	if (!options.skipRepoDiscovery) {
-		for (const year of years) {
-			const from = new Date(`${year}-01-01T00:00:00.000Z`);
-			const to = new Date(`${year + 1}-01-01T00:00:00.000Z`);
-			await fetchReposForWindow(LOGIN, from, to, repos);
-		}
+	for (const year of years) {
+		const from = new Date(`${year}-01-01T00:00:00.000Z`);
+		const to = new Date(`${year + 1}-01-01T00:00:00.000Z`);
+		await fetchReposForWindow(LOGIN, from, to, repos);
 	}
 
-	// Handle updateDetailsOnly mode
-	if (options.updateDetailsOnly) {
-		const fs = require("fs");
-		const outputFile = OUTPUT_FILE;
-
-		// Check if commits.json exists
-		if (!fs.existsSync(outputFile)) {
-			console.error(`❌ File ${outputFile} not found. Please run the full download first.`);
-			process.exit(1);
-		}
-
-		// Load existing data
-		console.log(`📖 Loading existing data from ${outputFile}...`);
-		const existingData = JSON.parse(fs.readFileSync(outputFile, "utf8"));
-		const existingRepos = Object.keys(existingData.repositories);
-
-		existingRepos.forEach((repo) => {
-			if (!isExcludedRepository(repo)) repos.add(repo);
-		});
-
-		console.log(`🔄 Updating repository details for ${repos.size} repositories...`);
-	} else {
-		// 3. Output
-		console.log(`\n${repos.size} unique repositories with commits by ${LOGIN}:\n`);
-		console.log([...repos].sort().join("\n"));
+	if (!repos.size) {
+		throw new Error("No repositories found for the configured account.");
 	}
+
+	console.log("\n" + repos.size + " unique repositories with contributions by " + LOGIN + ":\n");
+	console.log([...repos].sort().join("\n"));
 
 	// Create progress bar for overall repository processing
 	const overallProgressBar = new cliProgress.SingleBar({
@@ -604,25 +398,11 @@ export async function downloadAllRepos(
 
 	overallProgressBar.start(repos.size, 0, { repo: "Starting..." });
 
-	if (options.updateDetailsOnly) {
-		console.log("🔍 Fetching updated repository details and pull requests for all repositories...");
-	} else {
-		console.log("🔍 Fetching repository details, commits, and pull requests for all repositories...");
-	}
+	console.log("Fetching repository details and commits...");
 
-	// Collect all commit data, repository details, and pull requests
-	const allCommitsData: Record<string, any[]> = {};
-	const allRepositoryDetails: Record<string, RepositoryDetails | null> = {};
-	const allPullRequestsData: Record<string, any[]> = {};
+	const allCommitsData: Record<string, GitHubCommit[]> = {};
+	const allRepositoryDetails: Record<string, GitHubRepositoryDetails | null> = {};
 	const failedRepos: Array<{ repo: string; error: string }> = [];
-
-	// Load existing data if updating details only
-	let existingData: any = null;
-	if (options.updateDetailsOnly) {
-		const fs = require("fs");
-		const outputFile = OUTPUT_FILE;
-		existingData = JSON.parse(fs.readFileSync(outputFile, "utf8"));
-	}
 
 	const queue = new PQueue({
 		concurrency: 5, // Reduced concurrency to avoid rate limits
@@ -637,36 +417,23 @@ export async function downloadAllRepos(
 			let commitProgressBar: cliProgress.SingleBar | null = null;
 
 			try {
-				// Fetch repository details and pull requests together
-				const { details: repoDetails, pullRequests } = await fetchRepositoryDetails(owner, name, LOGIN);
+				const repoDetails = await fetchRepositoryDetails(owner, name);
 				allRepositoryDetails[repo] = repoDetails;
-				allPullRequestsData[repo] = pullRequests;
 
-				// Skip commits if updating details only
-				if (!options.updateDetailsOnly) {
-					// Create individual progress bar for commits in this repo
-					commitProgressBar = new cliProgress.SingleBar({
-						format: `Commits for ${repo} |{bar}| {percentage}% | {value} refs | Current: {ref} | Commits: {totalCommits} | ETA: {eta}s`,
-						barCompleteChar: "\u2588",
-						barIncompleteChar: "\u2591",
-						hideCursor: true,
-					});
+				commitProgressBar = new cliProgress.SingleBar({
+					format: `Commits for ${repo} |{bar}| {percentage}% | {value} refs | Current: {ref} | Commits: {totalCommits} | ETA: {eta}s`,
+					barCompleteChar: "\u2588",
+					barIncompleteChar: "\u2591",
+					hideCursor: true,
+				});
 
-					commitProgressBar.start(1, 0, { ref: "Starting...", totalCommits: 0 }); // Will be updated with actual ref count
-
-					const commits = await fetchCommits(owner, name, userId, commitProgressBar);
-
-					// Store commits data for this repository
-					allCommitsData[repo] = commits;
-				} else {
-					// Use existing commits data
-					allCommitsData[repo] = existingData.repositories[repo].commits;
-				}
+				commitProgressBar.start(1, 0, { ref: "Starting...", totalCommits: 0 });
+				const commits = await fetchCommits(owner, name, userId, commitProgressBar);
+				allCommitsData[repo] = commits;
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
 				failedRepos.push({ repo, error: message });
 				delete allRepositoryDetails[repo];
-				delete allPullRequestsData[repo];
 				delete allCommitsData[repo];
 			} finally {
 				if (commitProgressBar) {
@@ -682,49 +449,44 @@ export async function downloadAllRepos(
 
 	// Complete overall progress bar
 	overallProgressBar.stop();
-	console.log(`\n🎉 All repositories processed! Total: ${repos.size} repositories`);
+	console.log("\nAll repositories processed. Total: " + repos.size);
 	if (failedRepos.length) {
-		console.log(`\nWARN: Skipped ${failedRepos.length} repositories due to errors:`);
+		console.log("\nWARN: Skipped " + failedRepos.length + " repositories due to errors:");
 		failedRepos.forEach(({ repo, error }) => {
-			console.log(`- ${repo}: ${error}`);
+			console.log("- " + repo + ": " + error);
 		});
 	}
 
-	// Save all commit data, repository details, and pull requests to file
-	const fs = require("fs");
-
-	// Filter out excluded repositories
 	const filteredRepos = Object.keys(allCommitsData).filter((repoName) => !isExcludedRepository(repoName));
 
-	const outputData = {
-		user: LOGIN,
-		totalRepositories: filteredRepos.length,
-		totalCommits: filteredRepos.reduce((sum, repoName) => sum + allCommitsData[repoName].length, 0),
-		totalPullRequests: filteredRepos.reduce((sum, repoName) => sum + (allPullRequestsData[repoName] || []).length, 0),
-		generatedAt: new Date().toISOString(),
-		repositories: filteredRepos.reduce(
-			(acc, repoName) => {
-				acc[repoName] = {
-					details: allRepositoryDetails[repoName],
+	const outputData: GitHubExport = {
+		repositories: Object.fromEntries(
+			filteredRepos.map((repoName) => [
+				repoName,
+				{
+					details: allRepositoryDetails[repoName] ?? null,
 					commits: allCommitsData[repoName],
-					pullRequests: allPullRequestsData[repoName] || [],
-				};
-				return acc;
-			},
-			{} as Record<string, { details: RepositoryDetails | null; commits: any[]; pullRequests: any[] }>,
+				},
+			]),
 		),
 	};
 
-	fs.writeFileSync(OUTPUT_FILE, JSON.stringify(outputData, null, 2));
-	console.log(`\n💾 Commit data, repository details, and pull requests saved to: ${OUTPUT_FILE}`);
-	console.log(`📊 Total commits across all repositories: ${outputData.totalCommits}`);
-	console.log(`📊 Total pull requests across all repositories: ${outputData.totalPullRequests}`);
-	console.log(
-		`📋 Repository details fetched for ${Object.values(allRepositoryDetails).filter((details) => details !== null).length} repositories`,
-	);
+	const timelineData = createGitHubTimelinePageData(outputData);
+	const repositoryMetadata = createGitHubRepositoryMetadata(outputData);
+	fs.writeFileSync(TIMELINE_OUTPUT_FILE, JSON.stringify(timelineData, null, 2) + "\n");
+	fs.writeFileSync(REPOSITORIES_OUTPUT_FILE, JSON.stringify(repositoryMetadata, null, 2) + "\n");
+
+	const totalCommits = filteredRepos.reduce((sum, repoName) => sum + allCommitsData[repoName].length, 0);
+	const detailsCount = Object.values(allRepositoryDetails).filter((details) => details !== null).length;
+	console.log("Saved timeline data to " + TIMELINE_OUTPUT_FILE);
+	console.log("Saved repository metadata to " + REPOSITORIES_OUTPUT_FILE);
+	console.log("Total commits: " + totalCommits);
+	console.log("Repository details fetched: " + detailsCount);
 }
 
-if (require.main === module) {
+const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
 	const args = process.argv.slice(2);
 
 	if (args.includes("--help") || args.includes("-h")) {
@@ -732,25 +494,20 @@ if (require.main === module) {
 GitHub Repository Data Downloader
 
 Usage:
-GH_TOKEN=token bun github/download.ts [github_login] [options]
+GH_TOKEN=token bun github/download.ts [github_login]
 
-Options:
---update-details, -u    Update only repository details (keep existing commit data)
---skip-discovery, -s    Skip repository discovery, use hardcoded list
+Environment:
 GITHUB_EXCLUDED_ORGS     Comma-separated organization logins to skip (ExodusMovement is skipped by default)
-Output                   <script directory>/commits.json
+Output                   <script directory>/timeline.json and repositories.json
 --help, -h             Show this help message
 
 Examples:
-node github/download.ts                    # Full download (commits + details)
-node github/download.ts --update-details   # Update only repository details
-node github/download.ts -u                 # Short form for update details
-node github/download.ts --skip-discovery   # Skip repo discovery, use hardcoded list
+bun github/download.ts                      # Refresh timeline and repository metadata
 `);
 	} else {
-		downloadAllRepos({
-			updateDetailsOnly: args.includes("--update-details") || args.includes("-u"),
-			skipRepoDiscovery: args.includes("--skip-discovery") || args.includes("-s"),
+		void downloadAllRepos().catch((error: unknown) => {
+			console.error(error);
+			process.exitCode = 1;
 		});
 	}
 }
