@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: https://samuelscheit.com/
-
-# Sitemaps
-Sitemap: https://samuelscheit.com/sitemap.xml

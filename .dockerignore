@@ -1,6 +1,0 @@
-node_modules
-out/
-.next/
-.git/
-
-!.next/static/chunks/nextra-page-map-.mjs

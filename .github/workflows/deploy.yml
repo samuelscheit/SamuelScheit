@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      # next-image-export-optimizer skips images whose hash is unchanged in
+      # public/images/next-image-export-optimizer-hashes.json, so restoring the
+      # previous output turns a full re-encode into a no-op for untouched images.
+      - uses: actions/cache@v6
+        with:
+          path: |
+            .next/cache
+            public/images
+            public/img
+          key: build-${{ github.run_id }}
+          restore-keys: build-
+
+      - run: bun run build
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: out
+          # public/.well-known/discord (Discord domain verification) must ship.
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

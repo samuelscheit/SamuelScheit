@@ -15,7 +15,6 @@
 		"nextra": "4.6.1",
 		"nextra-theme-blog": "4.6.1",
 		"octokit": "5.0.5",
-		"patch-package": "8.0.1",
 		"react": "19.3.0",
 		"react-dom": "19.3.0",
 		"remark": "15.0.1",
