@@ -23,7 +23,7 @@
 </a>
 
 <div align="center">
-  <a href="https://commit-history.com/samuelscheit">
+  <a href="https://commit-history.com/samuelscheit?metric=private">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://commit-history.com/embed/samuelscheit?theme=dark&metric=private" />
       <img alt="samuelscheit's commit history" src="https://commit-history.com/embed/samuelscheit" />
