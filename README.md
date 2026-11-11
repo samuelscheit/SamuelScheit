@@ -21,3 +21,12 @@
 <img src="https://wakatime.com/share/@SamuelScheit/d2a669b6-9639-49db-92f3-c2baa4447608.svg" />
 </div>
 </a>
+
+<div align="center">
+  <a href="https://commit-history.com/samuelscheit">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://commit-history.com/embed/samuelscheit?theme=dark&metric=private" />
+      <img alt="samuelscheit's commit history" src="https://commit-history.com/embed/samuelscheit" />
+    </picture>
+  </a>
+</div>
